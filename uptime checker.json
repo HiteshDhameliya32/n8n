@@ -1,0 +1,206 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5d6b0d1e-cdca-4fb8-9ce4-bf3fe03e7915",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://www.pixcelsthemes.com/",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          },
+          "timeout": 5000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        180,
+        0
+      ],
+      "id": "46ef9b67-9055-488b-951b-c541f239deb2",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c9e1e7cd-16e7-4c2f-9574-adb8ad0872d5",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        400,
+        0
+      ],
+      "id": "ceee32cb-f6ce-4e55-9c45-f10ddc608a4e",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "U090AD0HPA6",
+          "mode": "list",
+          "cachedResultName": "yunitmoradiya21"
+        },
+        "text": "=pixcelsthemes.com is down",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        700,
+        360
+      ],
+      "id": "0541fd6b-1d51-4f54-bc48-923af48b68c3",
+      "name": "Send a message",
+      "webhookId": "d0cd3efd-7c4d-44ac-a641-3df28b315a06",
+      "credentials": {
+        "slackApi": {
+          "id": "6L8H0qlbz4iNwx5m",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.vapi.ai/call",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 6b922bcb-5d1b-493b-956c-f94c66c7aa0c"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"assistantId\": \"b208b330-51f2-47a7-b3b1-3d73f3ab09b5\",\n  \"phoneNumberId\": \"694f09bf-a35a-4749-960b-a4e82e916344\",\n  \"customer\": {\n  \"number\": \"+919537805470\"\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        180
+      ],
+      "id": "931c4eec-26f4-4f43-8af5-e64e7c2606a9",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "sendTo": "yunitmoradiya21@gmail.com",
+        "subject": "website",
+        "message": "picxelsthemes.com is down!!!!!!",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        700,
+        20
+      ],
+      "id": "ba62c3f5-d111-4d8a-9945-9f17a60114d1",
+      "name": "Send a message1",
+      "webhookId": "78d04776-9425-4aaa-be78-11fc9ee6024c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "NwY4EwMpJMKDZsrm",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae21f7ff983ee929f98e8d7968bbd21b49d1a44f2e129169348ba847d37dd5ac"
+  }
+}
