@@ -1,0 +1,140 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -240,
+        -80
+      ],
+      "id": "2f265d03-1a2a-4bdc-9116-22e4d6972bf1",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "15mqC0liNkYU5rgMbG7-u9Gt2O1jLA6YDAqZ4XrXPjjs",
+          "mode": "list",
+          "cachedResultName": "Payment Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/15mqC0liNkYU5rgMbG7-u9Gt2O1jLA6YDAqZ4XrXPjjs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/15mqC0liNkYU5rgMbG7-u9Gt2O1jLA6YDAqZ4XrXPjjs/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Payment Status",
+              "lookupValue": "Unpaid"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -20,
+        -80
+      ],
+      "id": "21663be3-c36f-46b9-a082-bb9c3f1251f3",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5ewVvwFTLDlJ7YzJ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all items passed to this Function node\nconst data = items.map(item => item.json);\n\n// Get today's date\nconst today = new Date();\ntoday.setHours(0, 0, 0, 0); // Normalize time for accurate comparison\n\n// Calculate 7 days from today\nconst sevenDaysFromNow = new Date(today);\nsevenDaysFromNow.setDate(today.getDate() + 7);\n\n// Filter: Unpaid invoices due within the next 7 days\nconst filtered = data.filter(entry => {\n  const dueDate = new Date(entry['Due Date']);\n  dueDate.setHours(0, 0, 0, 0); // Normalize\n  return (\n    entry['Payment Status'] === 'Unpaid' &&\n    dueDate >= today && \n    dueDate <= sevenDaysFromNow\n  );\n});\n\n// Sort by Due Date ascending\nconst sorted = filtered.sort((a, b) => {\n  const dateA = new Date(a['Due Date']);\n  const dateB = new Date(b['Due Date']);\n  return dateA - dateB;\n});\n\n// Return the results in n8n format\nreturn sorted.map(entry => ({ json: entry }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        -80
+      ],
+      "id": "dfe988fd-9c23-47a4-b7ea-1cd1c6860ad7",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json['Client Email'] }}",
+        "subject": "=Payment Due on {{ $json['Due Date'] }} for Invoice {{ $json['Invoice Number'] }}",
+        "message": "=Hi {{ $json['Client Name'] }},  \nI hope you're doing well. This is a friendly reminder that your payment for Invoice {{ $json['Invoice Number'] }} in the amount of {{ $json['Invoice Amount'] }} is due on {{ $json['Due Date'] }}.  \n\nHere are the invoice details:\nInvoice Number: {{ $json['Invoice Number'] }}\nAmount Due: {{ $json['Invoice Amount'] }}\nDue Date: {{ $json['Due Date'] }}\n\nIf you’ve already made the payment, please disregard this message. Otherwise, we kindly ask that you complete the payment by the due date to avoid any late fees.  \n\nIf you have any questions or need assistance, feel free to reach out.  Thank you for your prompt attention.  \n\nBest regards,   \nYunit Moradiya \nyunitmoradiya21@gmail.com",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        420,
+        -80
+      ],
+      "id": "a8f6b363-443f-4705-8651-0948196ccd75",
+      "name": "Send a message",
+      "webhookId": "8695a92b-de50-4287-bed7-4222f0b5cf3b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "NwY4EwMpJMKDZsrm",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae21f7ff983ee929f98e8d7968bbd21b49d1a44f2e129169348ba847d37dd5ac"
+  }
+}
