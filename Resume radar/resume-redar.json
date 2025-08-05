@@ -1,0 +1,703 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1400,
+        -100
+      ],
+      "id": "e83015b1-43f0-45b8-8b84-1bdb36590e7b",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "NwY4EwMpJMKDZsrm",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a data extraction assistant.  \nYour job is to read an email and identify any useful, structured details for further processing.  \nThe email text may be unstructured or vary in format. Extract only the relevant information that could help in identifying, contacting, or categorizing the sender.\n\nif email content is not available then use next thing\n\nFrom the email content, extract:\n1. Full name (if available)\n2. Email address(es) mentioned\n3. Phone number(s) mentioned\n4. Company or organization name (if applicable)\n5. Job title or position (if applicable)\n6. Location (city, state, country if present)\n7. LinkedIn or other professional profile links\n8. Any file names mentioned in the message (e.g., attached resumes, reports)\n9. Key context of the email (1–2 sentence plain text summary)\n\nIf any field is not found, set it to null or an empty array as appropriate.  \nDo not invent data. Only use information present in the email.\nemail content:\nmail text:{{ $json.text }} \nsubject:{{ $json.subject }}\nfrom: {{ $json.from.text }}\n {{ $json.text }}\n\nif not email then use this:\nname:{{ $json.Name }}\nemail:{{ $json.Email }}\ncontact No:{{ $json['Contact No:'] }}\n\n",
+        "options": {
+          "systemMessage": "Output your results as valid JSON in this format:\n{\n  \"full_name\": \"...\",\n  \"email\": \"...\",\n  \"phone\": \"...\",\n  \"company\": \"...\",\n  \"job_title\": \"...\",\n  \"location\": \"...\",\n  \"profiles\": [\"...\"],\n  \"summary\": \"...\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -140,
+        320
+      ],
+      "id": "e8e27b4f-1a41-4799-a160-2f698a13b687",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -140,
+        500
+      ],
+      "id": "723d01e8-5c87-4fff-ab3c-e619732428d9",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        220,
+        -100
+      ],
+      "id": "a7380da1-d1df-415e-9c81-46fd6001a0a2",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an email classifier.\nDecide if the given email is related to a job application, hiring process, recruitment, or a resume.\nIf yes, respond with: \"hiring\"\nIf no, respond with: \"other\"\n\nEmail subject: {{ $json.subject }}\nEmail body: {{ $json.text }}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -1180,
+        -100
+      ],
+      "id": "ef2da659-d74d-4fa3-9fbc-d46c6c5664a5",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1180,
+        80
+      ],
+      "id": "e9244c22-24e9-487c-a72a-e06dab30d1d6",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "simple": false,
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -600,
+        -100
+      ],
+      "id": "f238746b-c92b-48cb-b967-fb7e1913d7ba",
+      "name": "Get a message",
+      "webhookId": "a7b137c7-d9d3-4968-aa7a-80e202b15e1f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "NwY4EwMpJMKDZsrm",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "daf66253-a35a-4218-a4fe-2e38e3a9dc0f",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI hiring screener.  \nThe job requires: software developer  \nCandidate details: {{ JSON.stringify($json.user_data) }}  \nCandidate's resume: {{ JSON.stringify($json.resume_data) }}  \n\n1. Rate skill match from 0-100.\n   what is the reason\n2. Rate tone & professionalism from 0-100.  \n   what is the reason\n3. Rate writing quality from 0-100.\n   what is the reason\n4. Provide a one-sentence reason for the scores.  \n5. Give recommendation: \"Strong\", \"Consider\", or \"Reject\".  \n6. Calculate and provide an overall rating from 0-100 using the following formula:  \n   - Skill match = 50% of score  \n   - Tone & professionalism = 30% of score  \n   - Writing quality = 20% of score  \n   Overall Rating = (Skill match × 0.5) + (Tone & professionalism × 0.3) + (Writing quality × 0.2)  \n   Clearly show the calculation before giving the final overall score.\n",
+        "options": {
+          "systemMessage": "Return as JSON.\nif profile is rejected then also add it to \"rejected\" table in resume checker"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        900,
+        0
+      ],
+      "id": "4ec48ffc-3292-4eb2-8762-2651a74d8166",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        900,
+        160
+      ],
+      "id": "819b3fa1-1cba-4a3d-90d5-5c04c51484dc",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the AI output\nconst rawOutput = items[0].json.output || \"\";\n\n// Remove ```json and ``` wrappers\nconst cleaned = rawOutput\n  .replace(/```json/i, '') // remove starting ```json\n  .replace(/```/g, '')     // remove ending ```\n  .trim();\n\n// Parse JSON safely\nlet parsedData;\ntry {\n  parsedData = JSON.parse(cleaned);\n} catch (e) {\n  parsedData = { error: \"Invalid JSON format in AI output\", raw: cleaned };\n}\n\n// Return structured JSON so next nodes can use it\nreturn [{ json: parsedData }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        320
+      ],
+      "id": "7749b614-7e5a-4910-92fd-068ec2f598bb",
+      "name": "data parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the AI output\nconst rawOutput = items[0].json.output || \"\";\n\n// Remove ```json and ``` wrappers\nconst cleaned = rawOutput\n  .replace(/```json/i, '') // remove starting ```json\n  .replace(/```/g, '')     // remove ending ```\n  .trim();\n\n// Parse JSON safely\nlet parsedData;\ntry {\n  parsedData = JSON.parse(cleaned);\n} catch (e) {\n  parsedData = { error: \"Invalid JSON format in AI output\", raw: cleaned };\n}\n\n// Return structured JSON so next nodes can use it\nreturn [{ json: parsedData }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        0
+      ],
+      "id": "bc10ab23-8db3-406e-8e78-88fcd303866d",
+      "name": "data parser1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop through all incoming items\nreturn items.map(item => {\n  if (item.binary) {\n    const keys = Object.keys(item.binary);\n    if (keys.length > 0) {\n      const firstKey = keys[0];\n      // Copy the binary data to a new key called \"data\"\n      item.binary.data = item.binary[firstKey];\n      // Remove the old key\n      delete item.binary[firstKey];\n    }\n  }\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -40,
+        -100
+      ],
+      "id": "3f2f7d3b-256a-4f0c-abe4-b5f0d0538aab",
+      "name": "binary file id change"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "84b5a523-b2b1-46c3-a9ca-027a7f3b3b96",
+              "leftValue": "={{ $json.output}}",
+              "rightValue": "hiring",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -840,
+        -100
+      ],
+      "id": "1c04c195-f9f6-4a2f-a97c-2f4febee6628",
+      "name": "If  mail is releted"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Expecting exactly 2 items from previous node\nconst userData = items[0].json;\nconst resumeData = items[1].json;\n\nreturn [\n  {\n    json: {\n      user_data: userData,\n      resume_data: resumeData\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        0
+      ],
+      "id": "c918ab1b-d270-412c-a401-2f3eeb3b9309",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "formTitle": "job portal",
+        "formDescription": "plz submit your resume",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "placeholder": "your full name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Contact No:",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "resume",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -300,
+        60
+      ],
+      "id": "6df8d492-f27d-403d-ba03-abcaaa55c547",
+      "name": "On form submission",
+      "webhookId": "95ed6902-0c72-4cc3-b965-efdb0e3d8224"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Base', ``, 'string') }}",
+          "mode": "url"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Table', ``, 'string') }}",
+          "mode": "id",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        1060,
+        220
+      ],
+      "id": "bda68e54-4a60-403c-9148-ea8f45572cb1",
+      "name": "Create or update a record in Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "88aWpG36u7ZodhAZ",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e9edcdd5-830d-4022-83f0-3fa897b59ffd",
+              "leftValue": "={{ $json.recommendation }}",
+              "rightValue": "Reject",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1420,
+        0
+      ],
+      "id": "28aabc71-73f2-415d-b71b-ac2111250c82",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=you are professional database handler. you have to simply add detail to my airtable database.\nyou have to add profiles to table correctly\nCandidate details: {{ JSON.stringify($('Code').item.json.user_data) }}  \nCandidate's resume: {{ JSON.stringify($('Code').item.json.resume_data) }}",
+        "options": {
+          "systemMessage": "use my airtable as required \nfor \"Strong\" recommendation user \"priority\" table in resume checker\nfor \"Consider\" recommendation user \"Considered\" table in resume checker"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        -20
+      ],
+      "id": "d3f18588-5fa7-4392-9a94-d093a600bb92",
+      "name": "AI Agent3"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1640,
+        180
+      ],
+      "id": "dc1cb897-5210-465e-96bb-cf7fa659e060",
+      "name": "Google Gemini Chat Model3",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Base', ``, 'string') }}",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Table', ``, 'string') }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        1800,
+        200
+      ],
+      "id": "6181032d-e703-49a3-90a0-404aaccbf766",
+      "name": "Create or update a record in Airtable1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "88aWpG36u7ZodhAZ",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "data parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If  mail is releted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a message": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "binary file id change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "data parser1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "data parser": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "data parser1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "binary file id change": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If  mail is releted": {
+      "main": [
+        [
+          {
+            "node": "Get a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "binary file id change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create or update a record in Airtable": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create or update a record in Airtable1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae21f7ff983ee929f98e8d7968bbd21b49d1a44f2e129169348ba847d37dd5ac"
+  }
+}
