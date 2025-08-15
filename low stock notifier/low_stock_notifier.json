@@ -1,0 +1,194 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "hour": 9
+            }
+          ]
+        }
+      },
+      "id": "c47b3e39-5077-49b4-b075-d1566ec120fc",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        260,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "product",
+        "operation": "getAll",
+        "returnAll": true,
+        "additionalFields": {}
+      },
+      "id": "4b9a46ad-fd94-4e13-8dc9-fb362e8c786f",
+      "name": "Shopify — Get All Products",
+      "type": "n8n-nodes-base.shopify",
+      "typeVersion": 1,
+      "position": [
+        520,
+        -140
+      ],
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "nIYeHA6ZVPnZn2wQ",
+          "name": "Shopify Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const out = [];\nfor (const item of items) {\n  const p = item.json || {};\n  const variants = Array.isArray(p.variants) ? p.variants : [];\n  for (const v of variants) {\n    const qty = (v.inventory_quantity != null) ? Number(v.inventory_quantity) : 0;\n    const threshold = (v.metafields && v.metafields.reorder_threshold != null) ? Number(v.metafields.reorder_threshold) : ((p.metafields && p.metafields.reorder_threshold != null) ? Number(p.metafields.reorder_threshold) : 5);\n    const reorderQty = (v.metafields && v.metafields.reorder_quantity != null) ? Number(v.metafields.reorder_quantity) : ((p.metafields && p.metafields.reorder_quantity != null) ? Number(p.metafields.reorder_quantity) : 10);\n    const supplierEmail = (p.metafields && p.metafields.supplier_email) ? String(p.metafields.supplier_email) : 'supplier@example.com';\n    out.push({\n      json: {\n        productTitle: p.title || 'Unknown Product',\n        sku: v.sku || '',\n        inventoryQty: qty,\n        reorderThreshold: threshold,\n        reorderQuantity: reorderQty,\n        supplierEmail\n      }\n    });\n  }\n}\nreturn out;"
+      },
+      "id": "d199d99c-fc58-421d-8b8d-04e7d14a24d5",
+      "name": "Flatten Variants",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        780,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "return items.filter(i => Number(i.json.inventoryQty) <= Number(i.json.reorderThreshold));"
+      },
+      "id": "ae7ce6f6-4b34-470b-9545-1365f6c42917",
+      "name": "Filter Low Stock",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "if (items.length === 0) {\n  // No low stock → stop branch\n  return [];\n}\nfunction pad(n){return String(n).padStart(2,'0');}\nconst now = new Date();\nconst poNum = `AUTO-PO-${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;\nconst poDate = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;\n// Assume one supplier email for all; take the first (or you can group by supplier if needed)\nconst supplier = items[0].json.supplierEmail;\nconst lines = items.map(i => ({\n  Name: i.json.productTitle,\n  SKU: i.json.sku,\n  OrderQty: Number(i.json.reorderQuantity)\n}));\nreturn [{ json: { PO_Number: poNum, PO_Date: poDate, Supplier: supplier, LineItems: lines } }];"
+      },
+      "id": "676ccd27-eff5-4e7d-bf38-ee5bfcc85348",
+      "name": "Build PO (Aggregate)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "if (items.length === 0) {\n  return [];\n}\nconst po = items[0].json;\nlet body = `Purchase Order: ${po.PO_Number}\\nDate: ${po.PO_Date}\\nSupplier: ${po.Supplier}\\n\\nItems:\\n`;\nfor (const li of po.LineItems) {\n  body += `- ${li.Name} (SKU ${li.SKU}) x ${li.OrderQty}\\n`;\n}\nbody += `\\nRegards,\\nYour Company`;\nreturn [{ json: { ...po, EmailBody: body } }];"
+      },
+      "id": "036de52a-fe98-40b7-ab64-5a0036223b60",
+      "name": "Prepare Email Body",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "restock inventory",
+        "message": "={{ $json.EmailBody }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1780,
+        -140
+      ],
+      "id": "d75f41a4-b409-47b1-b9e2-3dc0df803ca5",
+      "name": "Create a draft",
+      "webhookId": "4a83fe82-0472-47f9-a264-03e5b3ff6d4e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "NwY4EwMpJMKDZsrm",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [
+          {
+            "node": "Shopify — Get All Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shopify — Get All Products": {
+      "main": [
+        [
+          {
+            "node": "Flatten Variants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten Variants": {
+      "main": [
+        [
+          {
+            "node": "Filter Low Stock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Low Stock": {
+      "main": [
+        [
+          {
+            "node": "Build PO (Aggregate)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build PO (Aggregate)": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Body": {
+      "main": [
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae21f7ff983ee929f98e8d7968bbd21b49d1a44f2e129169348ba847d37dd5ac"
+  }
+}
