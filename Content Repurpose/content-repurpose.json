@@ -1,0 +1,472 @@
+{
+  "name": "content repurpose",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "464df0a8-9fcf-4ce7-a523-32552f32f8cb",
+      "name": "Start (Execute Workflow Trigger)",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract text safely\nconst data = $json.content?.parts?.[0]?.text || $json.text || $json.output;\n\nif (!data) {\n  throw new Error(\"No text found. Actual input:\\n\" + JSON.stringify($json, null, 2));\n}\n\n// Remove ```json ... ``` wrappers\nconst cleaned = data.replace(/```json\\n?/, '').replace(/```$/, '').trim();\n\n// Parse into object\nlet parsed;\ntry {\n  parsed = JSON.parse(cleaned);\n} catch (err) {\n  throw new Error(\"Failed to parse JSON: \" + err.message + \"\\nInput was:\\n\" + cleaned);\n}\n\n// Wrap everything into \"slides\"\nreturn [{ slides: parsed }];\n"
+      },
+      "id": "7950971a-4dc0-43ea-8d4c-d767a2135b45",
+      "name": "Parse AI JSON",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        496,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ JSON.stringify($json.output) }}"
+            }
+          ]
+        },
+        "options": {
+          "systemMessage": "You are a content repurposing assistant. Take a blog post and turn it into 5-8 crisp LinkedIn carousel slides. Each slide should be short, engaging, and plain language. Output JSON with keys: slide1, slide2, slide3, etc. always output in this json format {   \"slide1\":    \"slide2\":    \"slide3\":  }"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "5371c87f-f997-41e0-a580-92fb09f7c3a8",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "slides",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        656,
+        0
+      ],
+      "id": "d03f9425-a59a-4983-a038-891cdcceb6a7",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        896,
+        0
+      ],
+      "id": "88454081-cba2-4d13-a329-3be045fb3290",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-preview-image-generation",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-preview-image-generation"
+        },
+        "prompt": "={{ $json.slides }}\ntext should be 100% accurate, without any distortion",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        240
+      ],
+      "id": "8b6ad477-4535-4263-93fd-ecfa33872c9b",
+      "name": "Generate an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=write a linkedin post around this blog/slides that feels personal\n{{ JSON.stringify($('Parse AI JSON').item.json.slides) }}"
+            }
+          ]
+        },
+        "options": {
+          "systemMessage": "you are professional and engaging linked in content writer."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        0
+      ],
+      "id": "c681cc1c-ddd8-43d5-9311-0f3166cc373c",
+      "name": "Message a model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1mBunWeG5hzj2ZoL-1tUjbt_gwvDPKfn4bY5070oMIzE",
+          "mode": "list",
+          "cachedResultName": "n8n expense manager",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mBunWeG5hzj2ZoL-1tUjbt_gwvDPKfn4bY5070oMIzE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 509827828,
+          "mode": "list",
+          "cachedResultName": "Aug-2024",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mBunWeG5hzj2ZoL-1tUjbt_gwvDPKfn4bY5070oMIzE/edit#gid=509827828"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "I_Date",
+              "displayName": "I_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "I_Desc",
+              "displayName": "I_Desc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "I_Amt",
+              "displayName": "I_Amt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "E_Date",
+              "displayName": "E_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "E_Desc",
+              "displayName": "E_Desc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "E_Amt",
+              "displayName": "E_Amt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "S_Date",
+              "displayName": "S_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "S_Desc",
+              "displayName": "S_Desc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "S_Amt",
+              "displayName": "S_Amt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "P_Date",
+              "displayName": "P_Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "P_Desc",
+              "displayName": "P_Desc",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "P_Amt",
+              "displayName": "P_Amt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1536,
+        0
+      ],
+      "id": "a718b413-232a-4e8b-b3fa-85d95acbb6d4",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5ewVvwFTLDlJ7YzJ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1328,
+        240
+      ],
+      "id": "b3e0669a-b781-4c47-894a-643187cbaae4",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "25H5iP4DCPGW839U",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Start (Execute Workflow Trigger)": [
+      {
+        "json": {
+          "output": {
+            "title": "Is the Internet Dying? Sam Altman’s Warning About a “Dead Internet”",
+            "content": "Is the internet as we know it slowly dying, replaced by a flood of AI-generated content and bot interactions? This unsettling question, once relegated to fringe online forums as the \"Dead Internet Theory,\" has just gained an astonishing level of credence. None other than Sam Altman, the CEO of OpenAI and the architect behind ChatGPT, has publicly suggested that this theory might, in fact, be correct.\n\nThis isn't just another speculative tech rumor; it's a profound statement from the very heart of the AI revolution. The \"Dead Internet Theory\" posits that a significant, if not overwhelming, portion of online content and engagement is no longer human-generated. Instead, it’s bots talking to bots, AI writing for AI, and propaganda designed to manipulate sentiment. For the leader of the company that arguably kickstarted the generative AI boom to voice such a concern sends shockwaves through the technology sector, raising critical questions about the future of digital authenticity, data integrity, and the very foundation of online interaction that many IT companies rely upon.\n\nThe core of the recent discussion stems from a report indicating Sam Altman’s acknowledgment that the Dead Internet Theory holds water. This isn't a new concept, but it gains immense weight when articulated by someone whose products are central to the proliferation of AI-generated text and media. The theory suggests that the internet, especially social media and forums, has been steadily losing its human touch, becoming increasingly saturated with synthetic content, automated accounts, and algorithms designed to curate or generate responses. What might have started as an fringe idea is now being given serious consideration, implying a growing recognition, even from within the AI development community, that their creations are fundamentally altering the digital landscape. Discussions on platforms like Reddit highlight the irony and the deep concern among users: if the very person creating the tools that could lead to a \"dead internet\" is admitting its possibility, what does that mean for the rest of us? Users are debating the implications for trust, the future of information discovery, and the potential for a completely synthetic online experience.\n\nFor technology companies and IT professionals, Altman's statement is not merely an academic musing; it’s a stark warning with immediate and long-term implications.\n\nFirstly, the **Authenticity Crisis** is upon us. If distinguishing human-generated content from AI-generated content becomes virtually impossible, the trust economy of the internet collapses. For companies relying on user-generated content, reviews, or authentic social media engagement, this is catastrophic. How can you build a brand or foster a community when you can't be sure who you're talking to or what content is real?\n\nSecondly, **Data Integrity** is at risk. AI models are trained on vast datasets, much of which is scraped from the internet. If the internet is increasingly populated by AI-generated content, future AI models will be trained on data that is not human-created but rather a derivative of previous AI outputs. This could lead to a self-referential loop, degrading the quality, originality, and truthfulness of future AI outputs – a phenomenon some call \"model collapse.\" For businesses developing or utilizing AI, this means re-evaluating data sourcing and verification strategies.\n\nThirdly, the **Evolution of Content Marketing and SEO** will be profound. If search engines and social media feeds are flooded with AI-generated articles, comments, and posts, the battle for human attention becomes even more complex. Companies will need to prioritize demonstrable human expertise, unique insights, and verifiable sources to stand out. The demand for advanced AI detection tools will likely skyrocket, as will the need for transparency in content creation.\n\nFinally, there's a crucial **Ethical Responsibility**. As creators and consumers of AI technologies, companies must confront the ethical implications of contributing to a potentially \"dead internet.\" This means exploring ways to implement clear labeling for AI-generated content, investing in robust verification methods, and fostering environments that prioritize genuine human interaction.\n\nSam Altman's candid assessment serves as a wake-up call. It's a moment for every tech company to pause and consider not just the capabilities of AI, but its profound societal and digital impact. The future of the internet, and by extension, the businesses built upon it, hinges on our collective response to this looming challenge.\n\nWhat are your thoughts on Sam Altman's statement? Do you believe the internet is heading towards a \"dead\" future, or is this an overblown concern? Share your insights in the comments below, and don't forget to follow our blog for more critical analyses of the evolving tech landscape.",
+            "excerpt": "Sam Altman, CEO of OpenAI, voiced concerns about the \"Dead Internet Theory,\" which suggests the internet is becoming saturated with AI-generated content and bot interactions. This raises questions about authenticity, data integrity, content marketing, and ethical responsibilities for tech companies.",
+            "category": "Technology, AI",
+            "tags": "AI, internet, technology, Sam Altman, OpenAI, Dead Internet Theory, content marketing, SEO, ethics",
+            "author_email": "admin@admin.com",
+            "is_published": true
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Start (Execute Workflow Trigger)": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Parse AI JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI JSON": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fcdb9d9b-cf67-4f58-b5fd-09eba18c9ead",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae21f7ff983ee929f98e8d7968bbd21b49d1a44f2e129169348ba847d37dd5ac"
+  },
+  "id": "Kd2oNdg9VWGMx6mO",
+  "tags": []
+}
