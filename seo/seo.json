@@ -1,0 +1,491 @@
+{
+  "name": "seo",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -128,
+        32
+      ],
+      "id": "aa5122ab-4c07-47cb-9801-4b45a434a390",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{ \"keywords\": \"theme forest\", \"myDomain\": \"https://www.pixcelsthemes.com/\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        80,
+        32
+      ],
+      "id": "bf045f0d-e50e-4b7f-b13b-afc8d9bfc8c5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "q": "={{ $json.keywords }}",
+        "location": "india",
+        "additionalFields": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-serpapi.serpApi",
+      "typeVersion": 1,
+      "position": [
+        272,
+        32
+      ],
+      "id": "57e7627e-c49b-4310-b93d-49f4518ebbd3",
+      "name": "Google search",
+      "credentials": {
+        "serpApi": {
+          "id": "pHulZOEpipAjNb6g",
+          "name": "SerpApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// --- Helper: Normalize domain (remove protocol + www)\nfunction normalizeDomain(url) {\n  return url.replace(/^https?:\\/\\/(www\\.)?/, \"\").split(\"/\")[0];\n}\n\n// ✅ Always pull myDomain from the first item of \"Edit Fields\"\nconst myDomainRaw = $('Edit Fields').first().json.myDomain;\nconst myDomainNormalized = normalizeDomain(myDomainRaw);\n\n// Extract results + flag myDomain\nconst results = items[0].json.organic_results.map((r, i) => {\n  const domain = normalizeDomain(r.link);\n  return {\n    json: {\n      keyword: $json.keyword,\n      domain,\n      position: i + 1,\n      title: r.title,\n      url: r.link,\n      myDomain: domain === myDomainNormalized // true if it's your site\n    }\n  };\n});\n\n// --- Calculate relative position for my domain\nconst myResult = results.find(r => r.json.myDomain === true);\n\nif (myResult) {\n  const total = results.length;\n  const aboveCount = results.filter(r => r.json.position < myResult.json.position).length;\n  const belowCount = results.filter(r => r.json.position > myResult.json.position).length;\n\n  myResult.json.relative = {\n    totalResults: total,\n    above: aboveCount,\n    below: belowCount,\n    percentile: (myResult.json.position / total) * 100 // smaller is better\n  };\n}\n\n// Return all results with myDomain flag + relative data for your site\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        32
+      ],
+      "id": "921d1135-5153-4f23-8a3a-120e19eeb978",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1NXqSxszdEiUwep5QeEUryBhtwObrxBXxrkcI7LbI4Mk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NXqSxszdEiUwep5QeEUryBhtwObrxBXxrkcI7LbI4Mk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{(() => {const d=new Date(); return d.getDate()+'-'+(d.getMonth()+1)+'-'+d.getFullYear();})()}}",
+            "keyword": "={{ $('Edit Fields').item.json.keywords }}",
+            "domain": "={{ $('Edit Fields').item.json.myDomain }}",
+            "position": "={{ $('Filter').item.json.position }}",
+            "title": "={{ $('Filter').item.json.title }}",
+            "above": "={{ $('Filter').item.json.relative.above }}",
+            "below": "={{ $('Filter').item.json.relative.below }}",
+            "change": "={{ $json.change }}",
+            "url": "={{ $('Filter').item.json.url }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "keyword",
+              "displayName": "keyword",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "domain",
+              "displayName": "domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "position",
+              "displayName": "position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "above",
+              "displayName": "above",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "below",
+              "displayName": "below",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "change",
+              "displayName": "change",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        256,
+        288
+      ],
+      "id": "1e49a337-798a-4466-81ee-3040f66c34cf",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5ewVvwFTLDlJ7YzJ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1NXqSxszdEiUwep5QeEUryBhtwObrxBXxrkcI7LbI4Mk",
+          "mode": "list",
+          "cachedResultName": "seo tracking",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NXqSxszdEiUwep5QeEUryBhtwObrxBXxrkcI7LbI4Mk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NXqSxszdEiUwep5QeEUryBhtwObrxBXxrkcI7LbI4Mk/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "date",
+              "lookupValue": "={{ \n  (() => {\n    const d = new Date(Date.now() - 86400000);\n    return `${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`;\n  })()\n}}"
+            }
+          ]
+        },
+        "combineFilters": "OR",
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -128,
+        288
+      ],
+      "id": "8e663a4e-8f2f-45fd-83ba-0485df661a68",
+      "name": "Get row(s) in sheet",
+      "executeOnce": true,
+      "alwaysOutputData": false,
+      "retryOnFail": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5ewVvwFTLDlJ7YzJ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "02708f7e-bbd2-450c-a871-d4d580229c2b",
+              "leftValue": "={{ $json.myDomain }}",
+              "rightValue": "ture",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        32
+      ],
+      "id": "f8e758dc-33cd-4586-b30f-71f0348e9840",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get last position and current position from input nodes\nconst lastPosition = $input.first().json.position;       // last recorded position\nconst currentPosition = $('Filter').first().json.position // current position\n\n// Calculate change: positive = improved, negative = worsened\nlet change = null;\nif (lastPosition !== undefined && currentPosition !== undefined) {\n  change = lastPosition - currentPosition;\n}\n\nreturn [\n  {\n    json: {\n      lastPosition,\n      currentPosition,\n      change\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        288
+      ],
+      "id": "56115d9b-141d-4821-851e-5264ffb8b838",
+      "name": "Code2"
+    }
+  ],
+  "pinData": {
+    "Google search": [
+      {
+        "json": {
+          "search_metadata": {
+            "id": "68c4f0aa6f1e40f62cf3d497",
+            "status": "Success",
+            "json_endpoint": "https://serpapi.com/searches/330ffdbb0b3dc016/68c4f0aa6f1e40f62cf3d497.json",
+            "pixel_position_endpoint": "https://serpapi.com/searches/330ffdbb0b3dc016/68c4f0aa6f1e40f62cf3d497.json_with_pixel_position",
+            "created_at": "2025-09-13 04:18:50 UTC",
+            "processed_at": "2025-09-13 04:18:50 UTC",
+            "google_url": "https://www.google.com/search?q=theme+forest&oq=theme+forest&uule=w+CAIQICIFSW5kaWE&sourceid=chrome&ie=UTF-8",
+            "raw_html_file": "https://serpapi.com/searches/330ffdbb0b3dc016/68c4f0aa6f1e40f62cf3d497.html",
+            "total_time_taken": 0.52
+          },
+          "search_parameters": {
+            "engine": "google",
+            "q": "theme forest",
+            "location_requested": "india",
+            "location_used": "India",
+            "google_domain": "google.com",
+            "device": "desktop"
+          },
+          "search_information": {
+            "query_displayed": "theme forest",
+            "total_results": 4610000,
+            "time_taken_displayed": 0.19,
+            "organic_results_state": "Some results for exact spelling but showing fixed spelling",
+            "spelling_fix": "themeforest",
+            "showing_results_for": "themeforest"
+          },
+          "organic_results": [
+            {
+              "position": 1,
+              "title": "WordPress Themes & Website Templates from ThemeForest",
+              "link": "https://themeforest.net/?srsltid=AfmBOoovjc6Eh89Mz3wZIV2F-Zl7vtIzG_F9iro5CMWl0MNpBIBque8J",
+              "displayed_link": "https://themeforest.net",
+              "snippet": "Discover 1000s of premium WordPress themes & website templates..."
+            },
+            {
+              "position": 2,
+              "title": "Sign in to ThemeForest",
+              "link": "https://account.envato.com/sign_in?to=themeforest",
+              "displayed_link": "https://account.envato.com › sign_in › to=themeforest",
+              "snippet": "Sign in to ThemeForest. Continue with Google..."
+            },
+            {
+              "position": 3,
+              "title": "Are you still buying pre-made WordPress theme from ...",
+              "link": "https://www.reddit.com/r/Wordpress/comments/1hmm9so/are_you_still_buying_premade_wordpress_theme_from/",
+              "displayed_link": "reddit.com",
+              "snippet": "That's why I stopped using ThemeForest templates..."
+            },
+            {
+              "position": 4,
+              "title": "Pixcels Themes - Premium WordPress Templates & SEO Friendly Designs",
+              "link": "https://www.pixcelsthemes.com/",
+              "displayed_link": "https://www.pixcelsthemes.com",
+              "snippet": "Pixcels Themes offers high-quality, SEO-optimized WordPress and website templates for businesses, startups, and agencies.",
+              "source": "Pixcels Themes (Dummy Data)"
+            },
+            {
+              "position": 5,
+              "title": "Themeforest designs, themes, templates and ...",
+              "link": "https://dribbble.com/tags/themeforest",
+              "displayed_link": "https://dribbble.com › tags › themeforest",
+              "snippet": "Themeforest. 3,645 inspirational designs..."
+            },
+            {
+              "position": 6,
+              "title": "ThemeForest : r/Wordpress",
+              "link": "https://www.reddit.com/r/Wordpress/comments/1i9diov/themeforest/",
+              "displayed_link": "reddit.com",
+              "snippet": "Themeforest has TERRIBLE quality control..."
+            },
+            {
+              "position": 7,
+              "title": "ThemeForest",
+              "link": "https://x.com/themeforest",
+              "displayed_link": "x.com/themeforest",
+              "snippet": "The world leader in premium website themes and templates..."
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Google search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google search": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ef2e779c-408f-401a-af8f-68c18db6e596",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae21f7ff983ee929f98e8d7968bbd21b49d1a44f2e129169348ba847d37dd5ac"
+  },
+  "id": "EBTZ76Zh5Uopj4qI",
+  "tags": [
+    {
+      "createdAt": "2025-09-12T12:53:39.651Z",
+      "updatedAt": "2025-09-12T12:53:39.651Z",
+      "id": "nxFLlRvvDjkWXkYR",
+      "name": "works"
+    }
+  ]
+}
