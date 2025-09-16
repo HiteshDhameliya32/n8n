@@ -1,0 +1,18 @@
+🚀 Say Goodbye to Manual SEO Tracking!
+
+Are you spending hours checking Google rankings for your website or clients? We’ve built an automated SEO SERP monitoring workflow that does all the heavy lifting for you.
+
+Here’s what it can do:
+✅ Track your website’s position for target keywords
+✅ Monitor competitor rankings and movements
+✅ Compare your current position with previous results to see improvements or drops
+✅ Store historical data in Google Sheets for trend analysis
+✅ Automatically flag your domain and calculate relative performance
+
+Whether you’re an SEO specialist, digital marketer, blogger, or e-commerce owner, this workflow saves time, provides actionable insights, and helps you stay ahead of the competition.
+
+📈 Imagine waking up to a daily SEO leaderboard showing your performance and your competitors’. No more manual tracking, no more missed opportunities.
+
+💡 Interested in automating your SEO tracking and reporting? Let’s connect! I can show you how to set this up in n8n for your business.
+
+#SEO #DigitalMarketing #Automation #n8n #SERPTracking #GrowthHacking #MarketingTools #DataDriven
