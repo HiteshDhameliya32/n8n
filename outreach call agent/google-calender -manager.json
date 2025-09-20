@@ -1,0 +1,238 @@
+{
+  "name": "My sub workflow-1",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "e78328b1-a2bb-4508-9c84-6aabb138ad52",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -32,
+        -64
+      ],
+      "id": "74cac48d-fe93-4b26-be66-4ea7297bc478",
+      "name": "Webhook",
+      "webhookId": "e78328b1-a2bb-4508-9c84-6aabb138ad52"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=manage the appointment scheduling in google calendar  \nname: {{ $json.body.message.toolCallList[0].function.arguments.name }}\ntime: {{ $json.body.message.toolCallList[0].function.arguments.time }}\ndate: {{ $json.body.message.toolCallList[0].function.arguments.date }}\n\ncurrent date: {{ $now }}",
+        "options": {
+          "systemMessage": "You are a scheduling assistant that manages appointments through Google Calendar.  \nAll appointments should last 30–40 minutes unless specified otherwise.  \n\n### Your responsibilities:\n1. Always collect the **person’s name** and the **preferred time** of the appointment.  \n2. Confirm that the chosen time does not conflict with existing events (use `get many events`).  \n3. Create new events when a time is available (use `create event`).  \n4. Allow rescheduling or editing of existing events (use `update event`).  \n5. If the user does not provide enough info, ask politely for clarification (e.g., “What time would you like?” or “Can I have your name for the booking?”).  \n6. Return clear and concise responses in natural language so the user understands what has been scheduled.  \n\n### Tool usage:\n- **create event** → When the user wants to book a new appointment. Include event title as `\"Appointment with {name}\"`, start time as requested, and end time 30–40 minutes later.  \n- **get many events** → Before creating an event, check for conflicts in the requested time range.  \n- **update event** → If the user requests to move or change details of an existing appointment.  \n\n### Style:\n- Be friendly and professional.  \n- Confirm every action with the user.  \n- Handle edge cases gracefully (double bookings, vague times, missing names).  "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        -64
+      ],
+      "id": "57a7002e-3d75-47d6-9009-a93df1e25092",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        256
+      ],
+      "id": "aaa97fda-c9cc-4820-bd85-ebdfb2416f1b",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "ymoradiya21@gmail.com",
+          "mode": "list",
+          "cachedResultName": "ymoradiya21@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "useDefaultReminders": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Use_Default_Reminders', ``, 'boolean') }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        288
+      ],
+      "id": "6a32c3f2-a17c-4444-9d7f-62b6aa98d62b",
+      "name": "Create event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "vpSFlwgfnY5p8aN5",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "ymoradiya21@gmail.com",
+          "mode": "list",
+          "cachedResultName": "ymoradiya21@gmail.com"
+        },
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        320,
+        304
+      ],
+      "id": "11d5b5a2-40cc-4d0f-a920-72080db3b5ab",
+      "name": "Get many events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "vpSFlwgfnY5p8aN5",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "ymoradiya21@gmail.com",
+          "mode": "list",
+          "cachedResultName": "ymoradiya21@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "useDefaultReminders": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Use_Default_Reminders', ``, 'boolean') }}",
+        "updateFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        496,
+        288
+      ],
+      "id": "37568c20-128c-4033-a97c-91d080dbaf70",
+      "name": "Update event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "vpSFlwgfnY5p8aN5",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"results\": [\n    {\n      \"toolCallId\": \"{{ $('Webhook').item.json.body.message.toolCalls[0].id }}\",\n      \"result\": \"{{ $json.output }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        608,
+        -64
+      ],
+      "id": "42a58bb6-7dea-49a0-bd79-83af1b1379a6",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ef661d69-dda2-42ce-b0be-8d232973ee53",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae21f7ff983ee929f98e8d7968bbd21b49d1a44f2e129169348ba847d37dd5ac"
+  },
+  "id": "8UOrMlRy6nU1le3f",
+  "tags": []
+}

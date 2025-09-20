@@ -1,0 +1,233 @@
+{
+  "name": "outreach call agent(vapi)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "id": "fc701711-4f75-42b6-b073-de65ab1c62c6",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        272,
+        16
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.vapi.ai/call",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 862358f1-25bf-48f8-8957-7d51fa808cbf"
+            },
+            {
+              "name": "Content-type",
+              "value": "application.json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application.json",
+        "body": "={   \n    \"assistantId\": \"1e71c350-78ec-4635-848c-7bb46b0fe0a9\",\n    \"customer\": {\n         \"number\": \"{{ $json['mobile no.'] }}\",\n         \"name\": \"{{ $json.name }}\"\n     },\n     \"phoneNumberId\": \"ef8bb051-0a48-4bfe-b680-e458278ee781\"\n}",
+        "options": {}
+      },
+      "id": "231e5a78-a47b-4ff9-9eab-3da0a36237a6",
+      "name": "Trigger Call on Vapi",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        704,
+        16
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1QfvZinHkgUwjYYA9hL-TB6nCCfgjHV4ZgkJbrsSUqO8",
+          "mode": "list",
+          "cachedResultName": "contacts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QfvZinHkgUwjYYA9hL-TB6nCCfgjHV4ZgkJbrsSUqO8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QfvZinHkgUwjYYA9hL-TB6nCCfgjHV4ZgkJbrsSUqO8/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        480,
+        16
+      ],
+      "id": "fe691de5-d232-40ec-83b1-123d78e3ebc6",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5ewVvwFTLDlJ7YzJ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1QfvZinHkgUwjYYA9hL-TB6nCCfgjHV4ZgkJbrsSUqO8",
+          "mode": "list",
+          "cachedResultName": "contacts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QfvZinHkgUwjYYA9hL-TB6nCCfgjHV4ZgkJbrsSUqO8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1QfvZinHkgUwjYYA9hL-TB6nCCfgjHV4ZgkJbrsSUqO8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "compnay",
+              "displayName": "compnay",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mobile no.",
+              "displayName": "mobile no.",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "called?",
+              "displayName": "called?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        912,
+        16
+      ],
+      "id": "1b842bae-f036-4fec-94b0-ee4c3b2817a1",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5ewVvwFTLDlJ7YzJ",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Call on Vapi": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Trigger Call on Vapi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a4848448-732f-4601-a55d-5c5d33f14585",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae21f7ff983ee929f98e8d7968bbd21b49d1a44f2e129169348ba847d37dd5ac"
+  },
+  "id": "qeFTYIQPzkAZSjdp",
+  "tags": []
+}
