@@ -1,0 +1,51 @@
+1️⃣ Problem Statement
+
+Many businesses, sales teams, and agencies struggle to find qualified local leads efficiently. They can query Google APIs, but:
+
+Raw data (places, phone numbers, addresses) is hard to act on.
+
+Manual filtering, scoring, or enrichment is time-consuming.
+
+Integrating data into outreach systems or CRMs requires technical know-how.
+
+Essentially: Businesses have access to data but lack actionable lead-ready output.
+
+2️⃣ Target Audience
+
+The workflow is most useful for:
+
+Lead generation agencies that need bulk local business leads.
+
+Local marketing or sales teams trying to identify prospects by category, location, or rating.
+
+Franchise consultants / real estate consultants seeking high-value businesses in specific areas.
+
+Small businesses / startups trying to find partners, collaborators, or customers in a region.
+
+3️⃣ Hook (Why They Must Care)
+
+“Stop wasting hours manually searching Google Maps — get ready-to-use leads with phone, website, address, and type automatically compiled.”
+
+“Turn scattered API data into actionable insights for outreach or marketing — no coding required.”
+
+“Save time, reduce errors, and increase sales efficiency by automating lead discovery.”
+
+4️⃣ Solution (What Your Current Workflow Does)
+
+Your current workflow:
+
+Fetches businesses/places data from Google Places API.
+
+Processes and cleans data (e.g., extracting ID, name, address, phone numbers, type).
+
+Stores structured output in Google Sheets.
+
+Optional: Can enrich with additional metadata (region code, session token, ratings).
+
+Effect:
+
+Produces ready-to-use lead lists.
+
+Centralizes data for outreach or analysis.
+
+Automates repetitive data collection tasks.
