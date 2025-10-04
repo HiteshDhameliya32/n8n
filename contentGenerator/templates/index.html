@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook File Upload</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: -0.5px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        input[type="file"], input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            background-color: #fff;
+        }
+        input[type="file"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        input[type="file"] {
+            cursor: pointer;
+            background-color: #f8f9fa;
+        }
+        input[type="text"] {
+            margin-bottom: 10px;
+        }
+        button {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border: 1px solid #f5c6cb;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.1);
+        }
+        .success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border: 1px solid #c3e6cb;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.1);
+        }
+        .response-section {
+            margin-top: 40px;
+            padding: 0;
+            background-color: transparent;
+            border: none;
+        }
+        .response-section h3 {
+            margin: 0 0 30px 0;
+            color: #2c3e50;
+            font-size: 1.8rem;
+            font-weight: 400;
+            text-align: center;
+            letter-spacing: -0.3px;
+        }
+        .response-data {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .submitted-info {
+            background-color: #d1ecf1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #bee5eb;
+        }
+        .submitted-info h4 {
+            margin-top: 0;
+            color: #0c5460;
+        }
+        .field-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        .field-section {
+            background-color: #fff;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: box-shadow 0.3s ease;
+        }
+        .field-section:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .field-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 18px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .field-header h4 {
+            margin: 0;
+            color: #495057;
+            font-size: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .copy-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            box-shadow: 0 1px 3px rgba(40, 167, 69, 0.2);
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-width: 60px;
+        }
+        .copy-btn:hover {
+            background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        }
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+        .field-content {
+            padding: 24px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 15px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            color: #495057;
+            background-color: #fafbfc;
+        }
+        .json-content {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background-color: #f1f3f4;
+            border-radius: 4px;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Webhook File Upload</h1>
+        
+        {% if error %}
+        <div class="error">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        {% if success %}
+        <div class="success">
+            Data sent successfully to webhook!
+        </div>
+        {% endif %}
+        
+        <form action="/submit" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file">Select Image File (Required):</label>
+                <input type="file" id="file" name="file" accept="image/*" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="text">Enter Text (Required):</label>
+                <input type="text" id="text" name="text" placeholder="Enter your text here..." required>
+            </div>
+            
+            <button type="submit">Submit to Webhook</button>
+        </form>
+        
+        {% if success and response_data %}
+        <div class="response-section">
+            
+            {% if response_data.parsed_data %}
+            <div class="field-container">
+                {% if response_data.parsed_data.title %}
+                <div class="field-section">
+                    <div class="field-header">
+                        <h4>Title</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('title-content')">📋 Copy</button>
+                    </div>
+                    <div id="title-content" class="field-content">{{ response_data.parsed_data.title }}</div>
+                </div>
+                {% endif %}
+                
+                {% if response_data.parsed_data.description %}
+                <div class="field-section">
+                    <div class="field-header">
+                        <h4>Description</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('description-content')">📋 Copy</button>
+                    </div>
+                    <div id="description-content" class="field-content">{{ response_data.parsed_data.description }}</div>
+                </div>
+                {% endif %}
+                
+                {% if response_data.parsed_data.tags %}
+                <div class="field-section">
+                    <div class="field-header">
+                        <h4>Tags</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('tags-content')">📋 Copy</button>
+                    </div>
+                    <div id="tags-content" class="field-content">{{ response_data.parsed_data.tags }}</div>
+                </div>
+                {% endif %}
+                {% if response_data.parsed_data.bullet_points %}
+                <div class="field-section">
+                    <div class="field-header">
+                        <h4>Bullet Points</h4>
+                        <button class="copy-btn" onclick="copyToClipboard('bullet-points-content')">📋 Copy</button>
+                    </div>
+                    <div id="bullet-points-content" class="field-content">
+                        {{ response_data.parsed_data.bullet_points | replace('\n', '<br>') | safe }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent || element.innerText;
+            
+            // Create a temporary textarea element
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            
+            // Select and copy the text
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); // For mobile devices
+            
+            try {
+                document.execCommand('copy');
+                
+                // Show feedback
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.style.backgroundColor = '#28a745';
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = '#007bff';
+                }, 2000);
+                
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy text. Please try selecting and copying manually.');
+            }
+            
+            // Remove the temporary textarea
+            document.body.removeChild(textarea);
+        }
+    </script>
+</body>
+</html>

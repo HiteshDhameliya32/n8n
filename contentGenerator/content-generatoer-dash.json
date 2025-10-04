@@ -1,0 +1,168 @@
+{
+  "name": "My workflow 7",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "enter listing details",
+        "formDescription": "provide photo and details",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "file",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "fabric details",
+              "placeholder": "enter fabric details",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -496,
+        -80
+      ],
+      "id": "6f6d51b9-68ae-4b4c-a899-d8a46b0eb737",
+      "name": "On form submission",
+      "webhookId": "ea00ba25-d011-41e0-aacb-62a9fe471983"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "=provide 50 character of title. and 5000 characters of description with emojis.\nbrand name is FOSTRIC.\nin title don't include brand name.\ndescription should be related to Marketing purpose.\nalso provide 50 marketing friendly tags for this product\nalso provide 100 characters each 5 bulletin points with emojies\nall tags should be separated by \",\"\nin this product {{ $json[\"fabric details\"] }}, {{ $json.body.text }}  fabric used.\n\nprovide output in json formate\ntitle\ndesc\ntags",
+        "inputType": "binary",
+        "binaryPropertyName": "file",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        -80
+      ],
+      "id": "574f5ab4-fa74-48ad-a677-ad33241341a5",
+      "name": "Analyze image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code node\nreturn items.map(item => {\n  let rawText = \"\";\n\n  try {\n    // Navigate safely into content.parts[0].text\n    rawText = item.json.content.parts[0].text || \"\";\n  } catch (e) {\n    rawText = \"\";\n  }\n\n  // Remove Markdown code block wrappers like ```json ... ```\n  rawText = rawText.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\n\n  let parsed = {};\n  try {\n    parsed = JSON.parse(rawText);\n  } catch (e) {\n    parsed = {};\n  }\n\n  const title = parsed.title || \"\";\n  const description = parsed.desc || parsed.description || \"\";\n  const tags = typeof parsed.tags === \"string\" ? parsed.tags : \"\";\n  const bullet_points = Array.isArray(parsed.bullet_points) ? parsed.bullet_points : [];\n\n  return {\n    json: {\n      title,\n      description,\n      tags,\n      bullet_points\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        -80
+      ],
+      "id": "9bc4b724-9fa9-494d-8a88-6b567fe48c17",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "387b3de0-7931-478b-b7d0-9d12c013afc6",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -496,
+        96
+      ],
+      "id": "b7f788f5-d29b-4dd1-a313-a0de802346ec",
+      "name": "Webhook",
+      "webhookId": "387b3de0-7931-478b-b7d0-9d12c013afc6"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        128,
+        -80
+      ],
+      "id": "ddec66ec-8b6d-4713-96aa-a95c5959c9fb",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Analyze image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze image": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Analyze image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b7a0422c-10fb-49a8-8b85-1d829c605bb1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae21f7ff983ee929f98e8d7968bbd21b49d1a44f2e129169348ba847d37dd5ac"
+  },
+  "id": "YPIo43fB9umFuFAr",
+  "tags": []
+}
