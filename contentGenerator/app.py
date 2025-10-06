@@ -86,7 +86,7 @@ def submit_form():
                 WEBHOOK_URL,
                 data=webhook_data,
                 files=files,
-                timeout=30
+                timeout=45
             )
             
             # Prepare response data
@@ -106,12 +106,13 @@ def submit_form():
                         bullet_points_text = '\n'.join(bullet_points_data)
                     else:
                         bullet_points_text = str(bullet_points_data) if bullet_points_data else ''
-                    
+                    # Capture html field if present so the template can render it as-is
                     parsed_data = {
                         'title': product_data.get('title', ''),
                         'description': product_data.get('description', ''),
                         'tags': product_data.get('tags', ''),
                         'bullet_points': bullet_points_text,
+                        'html': product_data.get('html', '') if isinstance(product_data.get('html', ''), str) else '',
                         'raw_json': json.dumps(json_data, indent=2, ensure_ascii=False)
                     }
                 else:
@@ -121,16 +122,25 @@ def submit_form():
                         'description': '',
                         'tags': '',
                         'bullet_points': '',
+                        'html': '',
                         'raw_json': json.dumps(json_data, indent=2, ensure_ascii=False)
                     }
             except:
                 # If not JSON, use raw text
+                # If the webhook returned pure HTML/text, detect HTML and pass it through
+                raw_text = response.text or ''
+                html_field = ''
+                # Basic detection for HTML content
+                if isinstance(raw_text, str) and ('<' in raw_text and '>' in raw_text):
+                    html_field = raw_text
+
                 parsed_data = {
                     'title': '',
                     'description': '',
                     'tags': '',
                     'bullet_points': '',
-                    'raw_json': response.text
+                    'html': html_field,
+                    'raw_json': raw_text
                 }
             
             response_data = {
