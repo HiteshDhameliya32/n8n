@@ -1,0 +1,95 @@
+{% extends 'base_mailops.html' %}
+{% block title %}Account Management · MailBoard{% endblock %}
+{% block head %}
+    <style>
+      :root {
+        --bg: #f7f9fc;
+        --panel: #ffffff;
+        --text: #0b132b;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --accent: #2563eb;
+        --accent-600: #1e40af;
+        --danger: #dc2626;
+        --danger-600: #b91c1c;
+      }
+      * { box-sizing: border-box; }
+      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; margin: 0; background: var(--bg); color: var(--text); }
+      .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+      .header { position: sticky; top: 0; background: var(--panel); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; gap: 12px; align-items: center; justify-content: space-between; z-index: 10; }
+      .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+      .brand .logo { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, var(--accent), #22c55e); display: inline-block; }
+      .actions a, .actions button { appearance: none; border: 1px solid var(--border); background: var(--panel); padding: 8px 12px; border-radius: 8px; color: var(--text); cursor: pointer; font-weight: 600; }
+      .actions a.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .actions a.primary:hover { background: var(--accent-600); }
+      .actions button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+      .actions button.danger:hover { background: var(--danger-600); }
+
+      .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-top: 20px; }
+      .panel h3 { margin: 0; padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+      
+      .account-list { list-style: none; margin: 0; padding: 0; }
+      .account-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--border); }
+      .account-item:last-child { border-bottom: none; }
+      .account-info { display: flex; align-items: center; gap: 12px; }
+      .account-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; color: #334155; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
+      .account-details h4 { margin: 0; font-size: 16px; font-weight: 600; }
+      .account-details p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+      .current-badge { background: var(--accent); color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+      .account-actions { display: flex; gap: 8px; }
+      .btn { appearance: none; border: 1px solid var(--border); background: #fff; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+      .btn:hover { background: #f3f4f6; }
+      .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .btn-primary:hover { background: var(--accent-600); }
+      .btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+      .btn-danger:hover { background: var(--danger-600); }
+      
+      .add-account-section { padding: 20px; text-align: center; border-top: 1px solid var(--border); }
+      .add-account-section h4 { margin: 0 0 12px; color: var(--muted); }
+    </style>
+{% endblock %}
+{% block header_actions %}
+  <a href="{% url 'mailops:dashboard' %}">Back to Dashboard</a>
+  <a href="{% url 'mailops:logout' %}">Disconnect All</a>
+{% endblock %}
+{% block content %}
+  <div class="panel">
+    <h3>Connected Accounts</h3>
+    {% if accounts %}
+      <ul class="account-list">
+        {% for account_id, account in accounts.items %}
+          <li class="account-item">
+            <div class="account-info">
+              <div class="account-avatar">{{ account.email|slice:":1"|upper }}</div>
+              <div class="account-details">
+                <h4>{{ account.email }}</h4>
+                <p>Gmail Account</p>
+              </div>
+              {% if account_id == current_account_id %}
+                <span class="current-badge">Current</span>
+              {% endif %}
+            </div>
+            <div class="account-actions">
+              {% if account_id != current_account_id %}
+                <a href="{% url 'mailops:switch_account' account_id %}" class="btn btn-primary">Switch</a>
+              {% endif %}
+              <form method="post" action="{% url 'mailops:remove_account' account_id %}" style="display: inline;">
+                {% csrf_token %}
+                <button class="btn btn-danger" type="submit" onclick="return confirm('Are you sure you want to remove this account?')">Remove</button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div style="padding: 20px; text-align: center; color: var(--muted);">
+        <p>No accounts connected</p>
+      </div>
+    {% endif %}
+    
+    <div class="add-account-section">
+      <h4>Add Another Account</h4>
+      <a href="{% url 'mailops:add_account' %}" class="btn btn-primary">Connect Gmail Account</a>
+    </div>
+  </div>
+{% endblock %}

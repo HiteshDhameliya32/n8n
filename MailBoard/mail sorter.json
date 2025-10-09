@@ -1,0 +1,168 @@
+{
+  "name": "mail sorter",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an email sorting assistant.  \nYou can ONLY use two tools: **Add Label** and **Read Label**.  \n\nYour job:  \n- Read the content, subject, and sender of the email.  \n- Decide the correct label(s) for the email.  \n- Apply labels using the \"Add Label\" tool.  \n- Before applying, check if the label already exists using \"Read Label\".  \n- If the label is already present, do nothing.\n\nLabeling rules (examples – adjust to your workflow):\n- \"Work\" → if the email is related to projects, tasks, or colleagues.  \n- \"Personal\" → if the email is from family, friends, or personal services.  \n- \"Promotions\" → if the email contains offers, discounts, or ads.  \n- \"Finance\" → if the email is related to banking, invoices, or payments.  \n- \"Urgent\" → if the email mentions deadlines, emergencies, or important notices.  \n\nGuidelines:  \n- Always check labels with **Read Label** before adding a new one.  \n- Never create new labels outside the defined list.  \n- Be precise and consistent.  \n- Output should always be a tool call, not plain text.  \n\nYour final decision must be in the form of tool usage only.\n\nmail content:\nmail id: {{ $json.id }}\nmail from: {{ $json.from.value[0].address }}\nmail subject: {{ $json.subject }}\nmail body: {{ $json.text }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -96,
+        -48
+      ],
+      "id": "6274496f-58b7-4891-9538-cc31a337691d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        176
+      ],
+      "id": "7ba62d93-d1e9-4a68-bcc1-ebaeb64b6212",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message_ID', ``, 'string') }}",
+        "labelIds": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Label_Names_or_IDs', ``, 'string') }}"
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        112,
+        176
+      ],
+      "id": "9f88b846-04c8-472b-8881-8d7dfbec3b0e",
+      "name": "Add label",
+      "webhookId": "43052a3c-3c5b-4082-8267-bf155798c15f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "NwY4EwMpJMKDZsrm",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "label",
+        "returnAll": ""
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        176
+      ],
+      "id": "ec64745e-e815-4957-b6ab-7ebdbf91f621",
+      "name": "read labels",
+      "webhookId": "cec80929-e823-4f2b-887b-5b941e222673",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "NwY4EwMpJMKDZsrm",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        -48
+      ],
+      "id": "3a7dd9eb-9c1b-41a1-b796-7133a61686d0",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "NwY4EwMpJMKDZsrm",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add label": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "read labels": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "08ada60d-ed22-4cf8-841a-f7a166e0eb9e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae21f7ff983ee929f98e8d7968bbd21b49d1a44f2e129169348ba847d37dd5ac"
+  },
+  "id": "0dNu6qb1gMONdDKM",
+  "tags": []
+}

@@ -1,0 +1,252 @@
+{% extends 'base_mailops.html' %}
+{% block title %}Inbox · MailBoard{% endblock %}
+{% block head %}
+    <style>
+      :root {
+        --bg: #f7f9fc;
+        --panel: #ffffff;
+        --text: #0b132b;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --accent: #2563eb;
+        --accent-600: #1e40af;
+        --danger: #dc2626;
+        --danger-600: #b91c1c;
+      }
+      * { box-sizing: border-box; }
+      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; margin: 0; background: var(--bg); color: var(--text); }
+      .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+      .header { position: sticky; top: 0; background: var(--panel); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; gap: 12px; align-items: center; justify-content: space-between; z-index: 10; }
+      .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+      .brand .logo { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, var(--accent), #22c55e); display: inline-block; }
+      .actions a, .actions button { appearance: none; border: 1px solid var(--border); background: var(--panel); padding: 8px 12px; border-radius: 8px; color: var(--text); cursor: pointer; font-weight: 600; }
+      .actions a.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .actions a.primary:hover { background: var(--accent-600); }
+      .actions button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+      .actions button.danger:hover { background: var(--danger-600); }
+
+      .grid { display: grid; grid-template-columns: 260px 1fr; gap: 16px; margin-top: 16px; }
+      .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+      .panel.messages { overflow: visible; }
+      .panel h3 { margin: 0; padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+
+      .labels { height: calc(100vh - 150px); display: flex; flex-direction: column; background: #f9f9f9; }
+      .labels-group { padding: 6px; }
+      .labels-group h4 { margin: 8px 6px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+      .labels-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; max-height: 200px; }
+      .labels-list li { margin: 2px 0; display: block; }
+      .labels-list a { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border-radius: 8px; color: var(--text); text-decoration: none; background: #fff; border: 1px solid #e0e0e0; }
+      .labels-list a:hover { background: #f3f4f6; }
+      .labels-list .active { background: #eef2ff; color: #1e3a8a; }
+      .label-chip { font-size: 11px; color: var(--muted); }
+
+      .messages { padding-bottom: 6px; }
+      .toolbar { padding: 10px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--border); position: relative; }
+      .label-filter { position: relative; }
+      .label-button { appearance: none; border: 1px solid var(--border); background: #fff; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+      .dropdown { position: absolute; top: 46px; left: 10px; width: 320px; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,.08); display: none; max-height: 360px; overflow: auto; z-index: 9999; opacity: 0; transform: translateY(-4px); transition: opacity .16s ease, transform .16s ease; }
+      .dropdown.open { display: block; opacity: 1; transform: translateY(0); }
+      .dropdown h4 { margin: 10px 12px 6px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+      .dropdown .item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; }
+      .dropdown .item:hover { background: #f9fafb; }
+      .dropdown .name { display: flex; align-items: center; gap: 8px; }
+      .dropdown input[type="checkbox"] { width: 16px; height: 16px; }
+      .count { font-size: 12px; color: var(--muted); }
+      .selected-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+      .selected-panel h3 { margin: 0; padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+      .selected-list { list-style: none; margin: 0; padding: 6px; }
+      .selected-list li a { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border-radius: 8px; color: var(--text); text-decoration: none; }
+      .selected-list li a:hover { background: #f3f4f6; }
+      .check { width: 16px; height: 16px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: #fff; font-size: 12px; }
+      .search { flex: 1; }
+      .search input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; }
+
+      .list { padding: 0 6px; }
+      .msg { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 12px; border-bottom: 1px solid var(--border); }
+      .msg:hover { background: #f9fafb; }
+      .unread-msg { background: #fef3c7; border-left: 4px solid #f59e0b; }
+      .unread-msg .subject { font-weight: 800; }
+      .meta { display: flex; gap: 10px; align-items: flex-start; }
+      .avatar { width: 36px; height: 36px; border-radius: 50%; background: #e2e8f0; color: #334155; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
+      .subject { font-weight: 700; margin-bottom: 4px; }
+      .snippet { color: var(--muted); font-size: 12px; }
+      .muted { color: var(--muted); font-size: 12px; }
+      .msg-actions form { display: inline; }
+      .btn { appearance: none; border: 1px solid var(--border); background: #fff; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+      .btn:hover { background: #f3f4f6; }
+      .btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+      .btn-danger:hover { background: var(--danger-600); }
+
+      .paginator { padding: 12px; text-align: center; }
+      .link { color: var(--accent); text-decoration: none; font-weight: 600; }
+      .link:hover { text-decoration: underline; }
+    </style>
+{% endblock %}
+{% block header_actions %}
+  {% if connected %}
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <div style="position: relative;">
+        <button id="accountToggle" class="btn" onclick="toggleAccountDropdown()" style="display: flex; align-items: center; gap: 8px;">
+          <span>{{ current_account.email|default:"Account" }}</span>
+          <span style="font-size: 12px;">▼</span>
+        </button>
+        <div id="accountDropdown" class="dropdown">
+          <h4>Switch Account</h4>
+          {% for account_id, account in accounts.items %}
+            <div class="item">
+              <a href="{% url 'mailops:switch_account' account_id %}" style="text-decoration: none; color: inherit;">
+                <span class="name">
+                  {% if account_id == current_account_id %}<span class="check">✓</span>{% endif %}
+                  {{ account.email }}
+                </span>
+              </a>
+            </div>
+          {% endfor %}
+          <div style="border-top: 1px solid var(--border); margin-top: 8px; padding-top: 8px;">
+            <a href="{% url 'mailops:add_account' %}" style="display: block; padding: 8px 12px; text-decoration: none; color: var(--accent);">+ Add Account</a>
+            <a href="{% url 'mailops:account_management' %}" style="display: block; padding: 8px 12px; text-decoration: none; color: var(--text);">Manage Accounts</a>
+          </div>
+        </div>
+      </div>
+      <a href="{% url 'mailops:logout' %}">Disconnect</a>
+    </div>
+  {% else %}
+    <a class="primary" href="{% url 'mailops:oauth_start' %}">Connect Google Account</a>
+  {% endif %}
+{% endblock %}
+{% block content %}
+      {% if not connected %}
+        <div class="panel" style="padding: 24px; text-align:center;">
+          <h2 style="margin-top:0;">Welcome to MailBoard</h2>
+          <p style="color: var(--muted);">Connect your Google account to load Gmail labels and recent emails.</p>
+          <p><a class="actions a primary" href="{% url 'mailops:oauth_start' %}">Connect Google Account</a></p>
+        </div>
+      {% else %}
+        <div class="grid">
+          <div class="panel labels">
+            <h3>Labels</h3>
+            <div class="labels-group">
+              <h4>All Mail</h4>
+              <ul class="labels-list">
+                <li>
+                  <a class="{% if not active_label %}active{% endif %}" href="{% url 'mailops:dashboard' %}">
+                    <span>All Mail</span>
+                    <span class="label-chip">{{ all_messages_total|default:"" }}</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div class="labels-group">
+              <h4>User labels</h4>
+              <ul class="labels-list">
+                {% for l in labels_user %}
+                  <li>
+                    <a class="{% if active_label == l.id %}active{% endif %}" href="{% url 'mailops:dashboard_by_label' l.id %}">
+                      <span>{{ l.name }}</span>
+                      <span class="label-chip">{{ l.messagesTotal|default:"" }}</span>
+                    </a>
+                  </li>
+                {% empty %}
+                  <li style="padding:8px 10px; color: var(--muted);">No user labels</li>
+                {% endfor %}
+              </ul>
+            </div>
+            <div class="labels-group">
+              <h4>General</h4>
+              <ul class="labels-list">
+                {% for l in labels_system %}
+                  <li>
+                    <a class="{% if active_label == l.id %}active{% endif %}" href="{% url 'mailops:dashboard_by_label' l.id %}">
+                      <span>{{ l.name }}</span>
+                      <span class="label-chip">{{ l.messagesTotal|default:"" }}</span>
+                    </a>
+                  </li>
+                {% empty %}
+                  <li style="padding:8px 10px; color: var(--muted);">No general labels</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+          <div class="panel messages">
+            <div class="toolbar">
+              <!-- labels dropdown removed -->
+              <div class="search">
+                <form method="get" action="{% if active_label %}{% url 'mailops:dashboard_by_label' active_label %}{% else %}{% url 'mailops:dashboard' %}{% endif %}" style="display:flex; gap:8px; align-items:center; width:100%">
+                  <input name="q" id="q" value="{{ query|default:"" }}" type="search" placeholder="Search in all mail..." style="flex:1" />
+                  <button class="btn" type="submit">Search</button>
+                </form>
+                {% if is_scrape_label and active_label %}
+                  <form style="display:inline; margin-left:8px;" method="post" action="{% url 'mailops:label_delete_all' active_label %}">
+                    {% csrf_token %}
+                    <button class="btn btn-danger" type="submit">Delete all</button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+            <div id="messages" class="list">
+              {% for m in messages %}
+                <div class="msg unread-msg" data-search="{{ m.subject }} {{ m.from }} {{ m.snippet }}">
+                  <div class="meta">
+                    <div class="avatar">{{ m.from|default:'?'|slice:":1"|upper }}</div>
+                    <div>
+                      <a class="subject" href="{% url 'mailops:message_detail' m.id %}">{{ m.subject|default:"(no subject)" }}</a>
+                      <div class="muted">{{ m.from }} • {{ m.date }}</div>
+                      <div class="snippet">{{ m.snippet }}</div>
+                    </div>
+                  </div>
+                  <div class="msg-actions">
+                    <form method="post" action="{% url 'mailops:message_delete' m.id %}">
+                      {% csrf_token %}
+                      <button class="btn btn-danger" type="submit">Delete</button>
+                    </form>
+                  </div>
+                </div>
+              {% empty %}
+                <p style="padding: 12px; color: var(--muted);">No unread messages</p>
+              {% endfor %}
+            </div>
+            {% if nextPageToken %}
+              <div class="paginator">
+                {% if active_label %}
+                  <a class="link" href="{% url 'mailops:dashboard_by_label' active_label %}?pageToken={{ nextPageToken }}&append=1{% if query %}&q={{ query|urlencode }}{% endif %}">Load more</a>
+                {% else %}
+                  <a class="link" href="?pageToken={{ nextPageToken }}&append=1{% if query %}&q={{ query|urlencode }}{% endif %}">Load more</a>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+{% endblock %}
+{% block script %}
+  {{ block.super }}
+  <script>
+      function filterMessages() {
+        var q = (document.getElementById('q') && document.getElementById('q').value || '').toLowerCase();
+        var nodes = document.querySelectorAll('#messages .msg');
+        nodes.forEach(function(n){
+          var hay = (n.getAttribute('data-search') || '').toLowerCase();
+          n.style.display = hay.includes(q) ? 'grid' : 'none';
+        });
+      }
+      
+      function toggleAccountDropdown() {
+        var dropdown = document.getElementById('accountDropdown');
+        dropdown.classList.toggle('open');
+      }
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(event) {
+        var dropdown = document.getElementById('accountDropdown');
+        var toggleBtn = document.getElementById('accountToggle');
+        if (!dropdown || !toggleBtn) return;
+        var clickedInsideDropdown = event.target.closest('#accountDropdown');
+        var clickedToggle = event.target.closest('#accountToggle');
+        if (!clickedInsideDropdown && !clickedToggle) {
+          dropdown.classList.remove('open');
+        }
+      });
+  </script>
+{% endblock %}
+
+

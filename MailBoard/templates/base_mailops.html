@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}MailBoard{% endblock %}</title>
+    <style>
+      :root { --bg:#0b1020; --panel:#0f172a; --text:#e5e7eb; --muted:#94a3b8; --border:#1f2937; --accent:#60a5fa; --accent-600:#3b82f6; --danger:#ef4444; --danger-600:#dc2626; }
+      @media (prefers-color-scheme: light) { :root { --bg:#f6f7fb; --panel:#ffffff; --text:#0b132b; --muted:#64748b; --border:#e5e7eb; --accent:#2563eb; --accent-600:#1d4ed8; --danger:#dc2626; --danger-600:#b91c1c; } }
+      *{box-sizing:border-box}
+      body{margin:0;background:var(--bg);color:var(--text);font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial}
+      a{color:var(--accent);text-decoration:none}
+      a:hover{text-decoration:underline}
+      .header{position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;z-index:10}
+      .brand{display:flex;align-items:center;gap:10px;font-weight:800}
+      .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg, var(--accent), #22c55e)}
+      .actions a,.actions button{appearance:none;border:1px solid var(--border);background:var(--panel);padding:8px 12px;border-radius:10px;color:var(--text);cursor:pointer;font-weight:700}
+      .actions a.primary{background:var(--accent);border-color:var(--accent);color:#0b1020}
+      .actions a.primary:hover{background:var(--accent-600)}
+      .container{max-width:1200px;margin:0 auto;padding:20px}
+      .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+      .panel h3{margin:0;padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+      .btn{appearance:none;border:1px solid var(--border);background:#0b1020;padding:8px 12px;border-radius:10px;color:#e5e7eb;cursor:pointer;font-weight:700}
+      .btn:hover{filter:brightness(1.1)}
+      .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+      .btn-danger:hover{background:var(--danger-600)}
+      .chip{background:#0b1020;border:1px solid var(--border);padding:4px 8px;border-radius:999px;color:var(--muted);font-size:12px}
+    </style>
+    {% block head %}{% endblock %}
+  </head>
+  <body>
+    <div class="header">
+      <div class="brand"><span class="logo"></span><a href="{% url 'mailops:dashboard' %}">MailBoard</a></div>
+      <div class="actions">
+        {% block header_actions %}{% endblock %}
+      </div>
+    </div>
+    <div class="container">
+      {% block content %}{% endblock %}
+    </div>
+    {% block script %}{% endblock %}
+  </body>
+  </html>
+
+

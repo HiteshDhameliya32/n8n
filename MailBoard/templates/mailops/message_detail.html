@@ -1,0 +1,220 @@
+{% extends 'base_mailops.html' %}
+{% block title %}{{ message.subject|default:"Message" }} · MailBoard{% endblock %}
+{% block head %}
+    <style>
+      :root {
+        --bg: #f7f9fc; --panel:#fff; --text:#0b132b; --muted:#6b7280; --border:#e5e7eb; --accent:#2563eb; --danger:#dc2626;
+      }
+      * { box-sizing: border-box; }
+      body { margin:0; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+      .header { position: sticky; top:0; background: var(--panel); border-bottom:1px solid var(--border); padding:14px 20px; display:flex; align-items:center; justify-content: space-between; }
+      .brand { display:flex; gap:10px; align-items:center; font-weight:700; }
+      .brand .logo { width: 24px; height:24px; border-radius:6px; background: linear-gradient(135deg, var(--accent), #22c55e); }
+      .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+      .panel { background: var(--panel); border:1px solid var(--border); border-radius: 12px; overflow:hidden; }
+      .meta { padding:16px; border-bottom:1px solid var(--border); }
+      .subject { margin:0 0 6px 0; font-size: 20px; }
+      .chips { display:flex; gap:8px; flex-wrap: wrap; font-size:12px; color: var(--muted); }
+      .chip { background:#f3f4f6; border:1px solid var(--border); padding:4px 8px; border-radius:999px; }
+      .actions { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:8px; align-items: center; justify-content: space-between; }
+      .btn { appearance:none; border:1px solid var(--border); background:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; }
+      .btn:hover { background:#f3f4f6; }
+      .btn-danger { background: var(--danger); border-color: var(--danger); color:#fff; }
+      .btn-danger:hover { filter: brightness(0.95); }
+      .body { padding:16px; }
+      .toolbar { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+      .toggle { font-size:12px; color: var(--muted); cursor:pointer; }
+      .content { border:1px solid var(--border); border-radius:10px; background:#fff; padding:14px; }
+      .content pre { margin:0; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+      a { text-decoration: none; color: var(--accent); }
+      a:hover { text-decoration: underline; }
+      
+      /* Label dropdown styling */
+      .dropdown .item:hover { background: #f9fafb; }
+      .dropdown label:hover { background: #f9fafb; }
+    </style>
+    <script>
+      function toggleLabelDropdown() {
+        var dropdown = document.getElementById('labelDropdown');
+        dropdown.classList.toggle('open');
+        dropdown.style.display = dropdown.classList.contains('open') ? 'block' : 'none';
+        if (dropdown.classList.contains('open')) {
+          setTimeout(() => {
+            dropdown.style.opacity = '1';
+            dropdown.style.transform = 'translateY(0)';
+          }, 10);
+        } else {
+          dropdown.style.opacity = '0';
+          dropdown.style.transform = 'translateY(-4px)';
+        }
+      }
+    </script>
+{% endblock %}
+{% block header_actions %}
+  <div style="display: flex; gap: 12px; align-items: center;">
+    <div style="position: relative;">
+      <button class="btn" onclick="toggleAccountDropdown()" style="display: flex; align-items: center; gap: 8px;">
+        <span>{{ current_account.email|default:"Account" }}</span>
+        <span style="font-size: 12px;">▼</span>
+      </button>
+      <div id="accountDropdown" class="dropdown" style="position: absolute; top: 46px; left: 0; width: 320px; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,.08); display: none; max-height: 360px; overflow: auto; z-index: 9999; opacity: 0; transform: translateY(-4px); transition: opacity .16s ease, transform .16s ease;">
+        <h4 style="margin: 10px 12px 6px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em;">Switch Account</h4>
+        {% for account_id, account in accounts.items %}
+          <div class="item" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px;">
+            <a href="{% url 'mailops:switch_account' account_id %}" style="text-decoration: none; color: inherit;">
+              <span class="name" style="display: flex; align-items: center; gap: 8px;">
+                {% if account_id == current_account_id %}<span class="check" style="width: 16px; height: 16px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: #fff; font-size: 12px;">✓</span>{% endif %}
+                {{ account.email }}
+              </span>
+            </a>
+          </div>
+        {% endfor %}
+        <div style="border-top: 1px solid var(--border); margin-top: 8px; padding-top: 8px;">
+          <a href="{% url 'mailops:add_account' %}" style="display: block; padding: 8px 12px; text-decoration: none; color: var(--accent);">+ Add Account</a>
+          <a href="{% url 'mailops:account_management' %}" style="display: block; padding: 8px 12px; text-decoration: none; color: var(--text);">Manage Accounts</a>
+        </div>
+      </div>
+    </div>
+    <a href="{% url 'mailops:dashboard' %}">Back to Dashboard</a>
+  </div>
+{% endblock %}
+{% block content %}
+      <div class="panel">
+        <div class="actions">
+          <a class="btn" href="javascript:history.back()">← Back</a>
+          
+          <!-- Right side buttons -->
+          <div style="margin-left: auto; display: flex; gap: 8px;">
+            <!-- Attach Label Button -->
+            <div style="position: relative; display: inline-block;">
+              <button class="btn" onclick="toggleLabelDropdown()" style="display: flex; align-items: center; gap: 8px;">
+                <span>Update Labels</span>
+                <span style="font-size: 12px;">▼</span>
+              </button>
+              <div id="labelDropdown" class="dropdown" style="position: absolute; top: 46px; right: 0; width: 300px; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,.08); display: none; max-height: 360px; overflow: auto; z-index: 9999; opacity: 0; transform: translateY(-4px); transition: opacity .16s ease, transform .16s ease;">
+                <h4 style="margin: 10px 12px 6px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em;">Update Labels</h4>
+                <form id="labelForm" method="post" action="{% url 'mailops:add_labels_to_message' message.id %}">
+                  {% csrf_token %}
+                  {% for label in user_labels %}
+                    <div class="item" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px;">
+                      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1;">
+                        <input type="checkbox" name="label_ids" value="{{ label.id }}" 
+                               {% if label.id in message.labelIds %}checked{% endif %} 
+                               style="width: 16px; height: 16px;">
+                        <span>{{ label.name }}</span>
+                      </label>
+                    </div>
+                  {% empty %}
+                    <div style="padding: 12px; color: var(--muted); text-align: center;">No user labels available</div>
+                  {% endfor %}
+                  <div style="border-top: 1px solid var(--border); margin-top: 8px; padding: 8px;">
+                    <button class="btn btn-primary" type="submit" style="width: 100%;">Update Labels</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            
+            <!-- Delete Button -->
+            <form style="display:inline" method="post" action="{% url 'mailops:message_delete' message.id %}">
+              {% csrf_token %}
+              <button class="btn btn-danger" type="submit">Delete</button>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Message Metadata -->
+        <div class="meta" style="padding: 16px; border-bottom: 1px solid var(--border);">
+          <h2 class="subject" style="margin: 0 0 12px;">{{ message.subject|default:"(no subject)" }}</h2>
+          <div class="chips">
+            <span class="chip">From: {{ message.from }}</span>
+            <span class="chip">To: {{ message.to }}</span>
+            <span class="chip">Date: {{ message.date }}</span>
+          </div>
+        </div>
+        
+        <div class="body">
+          <div id="content" class="content">
+            {% if message.body_html %}
+              <iframe id="htmlFrame" style="width:100%; border:0;" onload="resizeFrame()"></iframe>
+              <script>
+                (function(){
+                  var doc = '<!doctype html><html><head><meta charset="utf-8"><base target="_blank"></head><body>' + `{{ message.body_html|safe }}` + '</body></html>';
+                  var frame = document.getElementById('htmlFrame');
+                  frame.contentWindow.document.open();
+                  frame.contentWindow.document.write(doc);
+                  frame.contentWindow.document.close();
+                })();
+                function resizeFrame(){
+                  var frame = document.getElementById('htmlFrame');
+                  var h = frame.contentWindow.document.body.scrollHeight + 20;
+                  frame.style.height = h + 'px';
+                }
+              </script>
+            {% else %}
+              <pre id="bodyText">{{ message.body_text }}</pre>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+{% endblock %}
+{% block script %}
+  {{ block.super }}
+  <script>
+      function toggleWrap(){
+        var pre = document.getElementById('bodyText');
+        if(document.getElementById('wrapToggle').checked){
+          pre.style.whiteSpace = 'pre-wrap';
+        } else {
+          pre.style.whiteSpace = 'pre';
+        }
+      }
+      function toggleMono(){
+        var pre = document.getElementById('bodyText');
+        if(document.getElementById('monoToggle').checked){
+          pre.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+        } else {
+          pre.style.fontFamily = 'inherit';
+        }
+      }
+      
+      function toggleAccountDropdown() {
+        var dropdown = document.getElementById('accountDropdown');
+        dropdown.classList.toggle('open');
+        dropdown.style.display = dropdown.classList.contains('open') ? 'block' : 'none';
+        if (dropdown.classList.contains('open')) {
+          setTimeout(() => {
+            dropdown.style.opacity = '1';
+            dropdown.style.transform = 'translateY(0)';
+          }, 10);
+        } else {
+          dropdown.style.opacity = '0';
+          dropdown.style.transform = 'translateY(-4px)';
+        }
+      }
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(event) {
+        var accountDropdown = document.getElementById('accountDropdown');
+        var labelDropdown = document.getElementById('labelDropdown');
+        var button = event.target.closest('button');
+        
+        // Close account dropdown
+        if (!button || !button.onclick || button.onclick.toString().indexOf('toggleAccountDropdown') === -1) {
+          accountDropdown.classList.remove('open');
+          accountDropdown.style.display = 'none';
+          accountDropdown.style.opacity = '0';
+          accountDropdown.style.transform = 'translateY(-4px)';
+        }
+        
+        // Close label dropdown
+        if (!button || !button.onclick || button.onclick.toString().indexOf('toggleLabelDropdown') === -1) {
+          labelDropdown.classList.remove('open');
+          labelDropdown.style.display = 'none';
+          labelDropdown.style.opacity = '0';
+          labelDropdown.style.transform = 'translateY(-4px)';
+        }
+      });
+  </script>
+{% endblock %}
+
+

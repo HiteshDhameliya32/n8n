@@ -1,5 +1,5 @@
 {
-  "name": "My workflow 7",
+  "name": "product description generator",
   "nodes": [
     {
       "parameters": {
@@ -64,7 +64,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// n8n Code node\nreturn items.map(item => {\n  let rawText = \"\";\n\n  try {\n    // Navigate safely into content.parts[0].text\n    rawText = item.json.content.parts[0].text || \"\";\n  } catch (e) {\n    rawText = \"\";\n  }\n\n  // Remove Markdown code block wrappers like ```json ... ```\n  rawText = rawText.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\n\n  let parsed = {};\n  try {\n    parsed = JSON.parse(rawText);\n  } catch (e) {\n    parsed = {};\n  }\n\n  const title = parsed.title || \"\";\n  const description = parsed.desc || parsed.description || \"\";\n  const tags = typeof parsed.tags === \"string\" ? parsed.tags : \"\";\n  const bullet_points = Array.isArray(parsed.bullet_points) ? parsed.bullet_points : [];\n\n  return {\n    json: {\n      title,\n      description,\n      tags,\n      bullet_points\n    }\n  };\n});\n"
+        "jsCode": "// n8n Code node\nreturn items.map(item => {\n  let rawText = \"\";\n\n  try {\n    // Navigate safely into content.parts[0].text\n    rawText = item.json.content.parts[0].text || \"\";\n  } catch (e) {\n    rawText = \"\";\n  }\n\n  // Remove Markdown code block wrappers like ```json ... ```\n  rawText = rawText.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\n\n  let parsed = {};\n  let title = \"\";\n  let description = \"\";\n  let tags = \"\";\n  let bullet_points = [];\n  let html = \"\";\n\n  // Try parsing JSON\n  try {\n    parsed = JSON.parse(rawText);\n\n    // If JSON parsing is successful → extract normally\n    title = parsed.title || \"\";\n    description = parsed.desc || parsed.description || \"\";\n    tags = typeof parsed.tags === \"string\" ? parsed.tags : \"\";\n    bullet_points = Array.isArray(parsed.bullet_points) ? parsed.bullet_points : [];\n  } catch (e) {\n    // If JSON parsing fails → treat as HTML\n    html = rawText.replace(/\\n/g, \"\"); // remove newline chars\n  }\n\n  return {\n    json: {\n      title,\n      description,\n      tags,\n      bullet_points,\n      html\n    }\n  };\n});\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -158,7 +158,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "b7a0422c-10fb-49a8-8b85-1d829c605bb1",
+  "versionId": "56ba3f7d-e5b4-4ed0-8a0b-677585298c1a",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "ae21f7ff983ee929f98e8d7968bbd21b49d1a44f2e129169348ba847d37dd5ac"
