@@ -1,0 +1,13 @@
+I’ve built an email management system powered by n8n + a custom dashboard.
+Here’s what it does:
+
+📩 Smart Email Sorting – Automatically sorts incoming mails with n8n workflows
+👥 Multi-Account Dashboard – Manage multiple email accounts from one place
+🏷️ Label Management – Add or delete labels directly from the dashboard
+⚡ Productivity First – No more clutter, only organized inboxes
+
+This project shows how workflow automation + a simple dashboard can turn daily chaos into clarity.
+
+💡 Curious to see how it works? Let’s connect—I’d love to share more.
+
+#n8n #automation #emailmanagement #workflowautomation #productivity
