@@ -1,0 +1,23 @@
+🚀 Just explored how to build a Retrieval Augmented Generation (RAG) Agent in n8n — and it’s a game-changer for anyone working with large documents (PDFs, transcripts, CSVs).
+
+Instead of relying only on an LLM’s base knowledge, RAG connects your own data (stored in a vector database) so the AI can answer questions grounded in your documents.
+
+🔑 Key takeaways from the tutorial:
+
+Organize your documents (Google Drive, etc.) as a central knowledge base.
+
+Pre-process & split documents into smaller “chunks” before storing in a vector DB like Pinecone.
+
+Use embeddings (OpenAI’s text-embedding models work great) to make chunks searchable.
+
+In n8n, build a workflow to load new docs → embed → store in Pinecone.
+
+Add an AI Agent workflow with memory + a Vector Store QA tool so it retrieves only the most relevant chunks.
+
+💡 The result? You can ask domain-specific questions (e.g., from course transcripts, research, or company docs) and get accurate, contextual answers — instead of vague, generic ones.
+
+This isn’t just about chatbots. It’s about creating AI systems that understand your private data and respond with precision.
+
+👉 Curious: How would you use a RAG agent in your workflows — customer support, research, or internal knowledge bases?
+
+#n8n #AI #RAG #Automation #Productivity
