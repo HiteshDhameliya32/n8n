@@ -1,0 +1,26 @@
+💬 Built My Own RAG Chatbot with n8n + Pinecone + Google Gemini
+
+One of the most exciting parts of working with AI is turning raw knowledge into conversational experiences.
+I recently created a workflow in n8n that powers a retrieval-augmented chatbot — and it works beautifully!
+
+Here’s how it comes together 👇
+✅ A chat trigger captures user messages in real time
+✅ The query is transformed into embeddings with Google Gemini
+✅ Relevant context is pulled from a Pinecone vector database
+✅ The response is generated using Google Gemini Chat
+✅ A simple memory module keeps the conversation flowing naturally
+
+The result?
+A chatbot that doesn’t just “guess” answers — it can actually retrieve and reason over real knowledge sources.
+
+🔑 Why this matters:
+
+Teams can interact with their own documents in natural language
+
+Customer support can become context-aware instantly
+
+Any knowledge base becomes conversational without heavy coding
+
+This workflow makes it incredibly easy to plug RAG (Retrieval-Augmented Generation) into real-world use cases.
+
+#n8n #AI #Chatbot #RAG #Pinecone #GoogleGemini #LangChain

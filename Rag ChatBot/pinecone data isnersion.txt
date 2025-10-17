@@ -1,0 +1,29 @@
+🚀 Automating Knowledge Base Creation with n8n + Pinecone + Google Gemini
+
+I recently built a workflow in n8n that takes care of one of the most tedious tasks in AI projects: preparing and structuring data for vector databases.
+
+Here’s what it does 👇
+✅ Pulls files directly from Google Drive
+✅ Downloads and processes them automatically
+✅ Splits large documents into smaller, context-friendly chunks
+✅ Generates embeddings using Google Gemini
+✅ Stores everything in a Pinecone vector database
+
+This means that any new document I add to my Drive folder can be instantly transformed into structured embeddings—ready for search, analysis, or any downstream AI application. No manual preprocessing, no extra scripts.
+
+🔑 The big win?
+I can now continuously grow my knowledge base just by dropping files into Google Drive. n8n handles the rest.
+
+This setup is a game-changer for anyone working with:
+
+Research repositories 📚
+
+Internal knowledge bases 📂
+
+Content archives 📰
+
+👉 Next step: scaling this workflow to handle larger datasets and monitoring for real-time updates.
+
+Have you tried automating your data-to-vector pipeline yet?
+
+#n8n #AIautomation #VectorDatabase #Pinecone #GoogleGemini #LangChain
