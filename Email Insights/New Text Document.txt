@@ -1,0 +1,21 @@
+🚀 New Automation AI Email Digest Creator
+
+Tired of scrolling through endless emails every morning
+I built a smart n8n workflow that saves time and boosts focus — by sending you a daily AI-generated summary of your important emails.
+
+🧩 How it works
+
+⏰ Trigger Runs automatically every day.
+
+📩 Fetch Pulls “Important” emails from Gmail or Outlook.
+
+🤖 Summarize Uses AI to create a short, readable digest.
+
+📤 Send Delivers the summary straight to your inbox.
+
+No more clutter. No more overwhelm.
+Just the insights you actually need — right when you start your day.
+
+If you’d like something similar for your team or personal inbox, let’s connect — I can customize this automation to fit your workflow perfectly.
+
+#n8n #automation #ai #productivity #workflowautomation #emailmanagement #dailyhabits

@@ -1,0 +1,23 @@
+🚀 Automating Resume Intelligence with AI + n8n
+
+I just built a new workflow that uses Retrieval-Augmented Generation (RAG) inside n8n to automatically analyze and evaluate resumes! 🧠📄
+
+Instead of manually scanning through candidate profiles, this workflow:
+✅ Extracts resume text automatically
+✅ Uses RAG to match candidate skills with hiring criteria
+✅ Generates structured insights like:
+ • Candidate summary
+ • Skill match scores
+ • Recommendations
+ • Hiring decision suggestions
+✅ Even flags profiles that need a human review before final selection.
+
+This automation combines n8n, vector databases (like Pinecone), and AI reasoning — turning the hiring process into a data-driven, intelligent workflow.
+
+I built it as part of my ongoing experiments to blend AI, RAG, and workflow automation into real-world, practical tools for teams.
+
+💡 Imagine an HR system that doesn’t just read resumes… it understands them.
+
+Would you be interested if I open-sourced this workflow or made a tutorial series on how to build your own RAG-powered hiring assistant? 👇
+
+#AI #RAG #n8n #Automation #RecruitmentAI #WorkflowAutomation #Python #VectorDB #Pinecone #OpenSource #AITools

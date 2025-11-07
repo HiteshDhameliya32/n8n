@@ -217,7 +217,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Webhook File Upload</h1>
+        <h1>File Upload</h1>
         
         {% if error %}
         <div class="error">
@@ -227,7 +227,7 @@
         
         {% if success %}
         <div class="success">
-            Data sent successfully to webhook!
+            Data sent successfully!
         </div>
         {% endif %}
         
@@ -242,7 +242,7 @@
                 <input type="text" id="text" name="text" placeholder="Enter your text here..." required>
             </div>
             
-            <button type="submit">Submit to Webhook</button>
+            <button type="submit">Submit</button>
         </form>
         
         {% if success and response_data %}
