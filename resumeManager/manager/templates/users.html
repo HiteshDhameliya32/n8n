@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Users - AI Resume Checker{% endblock %}
+
+{% block content %}
+<div class="users-page">
+    <div class="page-header">
+        <h1>Manage Users</h1>
+        <a href="{% url 'home' %}" class="btn btn-secondary">← Back to Dashboard</a>
+    </div>
+
+    <!-- Create New User Form -->
+    <div class="settings-section card">
+        <h2 class="section-title">Create New User</h2>
+        <div class="settings-content">
+            <form id="create-user-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label for="new-username" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">Username</label>
+                        <input type="text" id="new-username" placeholder="Username" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                    </div>
+                    <div>
+                        <label for="new-email" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">Email (optional)</label>
+                        <input type="email" id="new-email" placeholder="Email" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label for="new-password" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">Password</label>
+                        <input type="password" id="new-password" placeholder="Password" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                    </div>
+                    <div>
+                        <label for="new-password-confirm" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">Confirm Password</label>
+                        <input type="password" id="new-password-confirm" placeholder="Confirm Password" required style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary">Create User</button>
+                    <button type="reset" class="btn btn-secondary">Clear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Users List -->
+    <div class="settings-section card">
+        <h2 class="section-title">All Users</h2>
+        <div class="settings-content">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #e5e7eb;">
+                        <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #374151;">Username</th>
+                        <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #374151;">Email</th>
+                        <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #374151;">Status</th>
+                        <th style="text-align: center; padding: 0.75rem; font-weight: 600; color: #374151;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="users-list">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+            <p id="no-users-message" style="text-align: center; color: #6b7280; margin-top: 2rem;">Loading users...</p>
+        </div>
+    </div>
+
+    <!-- Edit User Modal (inline) -->
+    <div id="edit-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 0.5rem; padding: 2rem; max-width: 400px; width: 90%; box-shadow: 0 20px 25px rgba(0,0,0,0.15);">
+            <h3 style="margin-top: 0; margin-bottom: 1.5rem; color: #1f2937;">Edit User</h3>
+            <form id="edit-user-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                <input type="hidden" id="edit-user-id">
+                <div>
+                    <label for="edit-username" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">Username</label>
+                    <input type="text" id="edit-username" readonly style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; background: #f9fafb; color: #6b7280;">
+                </div>
+                <div>
+                    <label for="edit-email" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">Email</label>
+                    <input type="email" id="edit-email" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                </div>
+                <div>
+                    <label for="edit-password" style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">New Password (leave blank to keep current)</label>
+                    <input type="password" id="edit-password" placeholder="New password" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                </div>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .users-page {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .page-header h1 {
+        margin: 0;
+        font-size: 1.875rem;
+        color: #1f2937;
+    }
+    
+    .settings-section {
+        margin-bottom: 2rem;
+    }
+    
+    .section-title {
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        font-size: 1.25rem;
+        color: #374151;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 1rem;
+    }
+    
+    table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+    
+    table tbody tr td {
+        padding: 0.75rem;
+        border-bottom: 1px solid #e5e7eb;
+        color: #1f2937;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .status-active {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-inactive {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+    
+    .action-buttons button {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsers();
+    
+    document.getElementById('create-user-form').addEventListener('submit', handleCreateUser);
+    document.getElementById('edit-user-form').addEventListener('submit', handleEditUser);
+});
+
+function loadUsers() {
+    fetch('/api/users/', {
+        headers: {
+            'X-CSRFToken': utils.getCsrfToken()
+        }
+    })
+    .then(resp => resp.json())
+    .then(data => {
+        if (data.users && data.users.length > 0) {
+            const tbody = document.getElementById('users-list');
+            tbody.innerHTML = '';
+            document.getElementById('no-users-message').style.display = 'none';
+            
+            data.users.forEach(user => {
+                const row = document.createElement('tr');
+                const status = user.is_active ? '<span class="status-badge status-active">Active</span>' : '<span class="status-badge status-inactive">Inactive</span>';
+                row.innerHTML = `
+                    <td>${user.username}</td>
+                    <td>${user.email || '-'}</td>
+                    <td>${status}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-small" onclick="editUser(${user.id}, '${user.username}', '${user.email}')">Edit</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteUser(${user.id}, '${user.username}')">Delete</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        } else {
+            document.getElementById('no-users-message').textContent = 'No users created yet';
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        document.getElementById('no-users-message').textContent = 'Error loading users';
+    });
+}
+
+function handleCreateUser(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('new-username').value;
+    const email = document.getElementById('new-email').value;
+    const password = document.getElementById('new-password').value;
+    const passwordConfirm = document.getElementById('new-password-confirm').value;
+    
+    if (password !== passwordConfirm) {
+        utils.showAlert('Passwords do not match', 'error');
+        return;
+    }
+    
+    const data = new FormData();
+    data.append('username', username);
+    data.append('email', email);
+    data.append('password', password);
+    
+    fetch('/api/users/create/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': utils.getCsrfToken()
+        },
+        body: data
+    })
+    .then(resp => resp.json())
+    .then(data => {
+        if (data.success) {
+            utils.showAlert(`User "${username}" created successfully`, 'success');
+            document.getElementById('create-user-form').reset();
+            loadUsers();
+        } else {
+            utils.showAlert(data.error || 'Failed to create user', 'error');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        utils.showAlert('Failed to create user', 'error');
+    });
+}
+
+function editUser(userId, username, email) {
+    document.getElementById('edit-user-id').value = userId;
+    document.getElementById('edit-username').value = username;
+    document.getElementById('edit-email').value = email;
+    document.getElementById('edit-password').value = '';
+    document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function closeEditModal() {
+    document.getElementById('edit-modal').style.display = 'none';
+}
+
+function handleEditUser(e) {
+    e.preventDefault();
+    
+    const userId = document.getElementById('edit-user-id').value;
+    const email = document.getElementById('edit-email').value;
+    const password = document.getElementById('edit-password').value;
+    
+    const data = new FormData();
+    data.append('user_id', userId);
+    data.append('email', email);
+    if (password) {
+        data.append('password', password);
+    }
+    
+    fetch('/api/users/update/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': utils.getCsrfToken()
+        },
+        body: data
+    })
+    .then(resp => resp.json())
+    .then(data => {
+        if (data.success) {
+            utils.showAlert('User updated successfully', 'success');
+            closeEditModal();
+            loadUsers();
+        } else {
+            utils.showAlert(data.error || 'Failed to update user', 'error');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        utils.showAlert('Failed to update user', 'error');
+    });
+}
+
+function deleteUser(userId, username) {
+    if (!confirm(`Are you sure you want to delete user "${username}"?`)) {
+        return;
+    }
+    
+    const data = new FormData();
+    data.append('user_id', userId);
+    
+    fetch('/api/users/delete/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': utils.getCsrfToken()
+        },
+        body: data
+    })
+    .then(resp => resp.json())
+    .then(data => {
+        if (data.success) {
+            utils.showAlert(`User "${username}" deleted successfully`, 'success');
+            loadUsers();
+        } else {
+            utils.showAlert(data.error || 'Failed to delete user', 'error');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        utils.showAlert('Failed to delete user', 'error');
+    });
+}
+</script>
+{% endblock %}

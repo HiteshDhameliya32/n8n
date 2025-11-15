@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Email Templates - AI Resume Checker{% endblock %}
+
+{% block content %}
+<div class="email-templates-page">
+    <div class="page-header">
+        <h1>Email Templates</h1>
+        <p>Manage default email templates for sending interview invitations to candidates</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Default Email Template</h2>
+        </div>
+        <div class="card-body">
+            <form id="email-template-form">
+                <div class="form-group">
+                    <label for="template-subject">Email Subject:</label>
+                    <input type="text" id="template-subject" class="form-control" value="Interview Invitation" required>
+                </div>
+                <div class="form-group">
+                    <label for="template-body">Email Body:</label>
+                    <textarea id="template-body" class="form-control" rows="12" required>Dear {candidate_name},
+
+We are pleased to invite you for an interview for the position of {position}.
+
+Interview Details:
+- Date: {date}
+- Time: {time}
+- Location: {location}
+
+Please confirm your availability.
+
+Best regards</textarea>
+                    <small class="form-text text-muted">
+                        Available placeholders: {candidate_name}, {position}, {date}, {time}, {location}
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="template-active" checked>
+                        Set as active template
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Template</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 2rem;">
+        <div class="card-header">
+            <h2>Saved Templates</h2>
+        </div>
+        <div class="card-body">
+            <div id="templates-list">
+                <p class="empty-state">No templates saved yet</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #374151;
+    }
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        font-size: 1rem;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .form-text {
+        display: block;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    .template-item {
+        padding: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+        margin-bottom: 1rem;
+        background-color: #f9fafb;
+    }
+    .template-item.active {
+        border-color: #667eea;
+        background-color: #f0f4ff;
+    }
+    .template-item h4 {
+        margin: 0 0 0.5rem 0;
+        color: #1f2937;
+    }
+    .template-item p {
+        margin: 0.5rem 0;
+        color: #6b7280;
+        white-space: pre-wrap;
+    }
+    .template-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+    }
+    .template-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background-color: #10b981;
+        color: white;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/email_templates.js' %}"></script>
+{% endblock %}
+

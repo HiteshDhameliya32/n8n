@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Settings - AI Resume Checker{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <div class="page-header">
+        <h1>Settings</h1>
+        <a href="{% url 'home' %}" class="btn btn-secondary">← Back to Dashboard</a>
+    </div>
+
+    <!-- Google Calendar Settings -->
+    <div class="settings-section card">
+        <h2 class="section-title">Google Calendar & Gmail Integration</h2>
+        <div class="settings-content">
+            {% if is_superuser %}
+            <div style="margin-bottom:1.5rem; padding:0.75rem; border:1px solid #e5e7eb; border-radius:0.375rem; background:#ffffff;">
+                <h3 style="margin-top:0;">OAuth App Credentials (Admin)</h3>
+                <p style="margin:0 0 0.5rem 0; color:#6b7280;">Configure the Google OAuth Client ID and Secret used by the app. Only admins can change these.</p>
+                <div style="display:flex; gap:0.5rem; flex-direction:column;">
+                    <input type="text" id="google_client_id" placeholder="Google Client ID" value="{{ app_client_id }}" style="padding:0.5rem; width:100%;" />
+                    <input type="password" id="google_client_secret" placeholder="Google Client Secret" style="padding:0.5rem; width:100%;" />
+                    <div style="display:flex; gap:0.5rem;">
+                        <button class="btn btn-primary" id="save-client-creds">Save Credentials</button>
+                        <button class="btn btn-secondary" id="clear-client-creds">Clear</button>
+                    </div>
+                    <small style="color:#9ca3af;">Note: In production, store secrets securely (encrypted).</small>
+                </div>
+            </div>
+            {% endif %}
+            <p class="settings-description">Connect your Google Calendar and Gmail account to enable interview scheduling and automated email sending.</p>
+            
+            <div class="settings-status" id="calendar-status">
+                {% if google_calendar_connected %}
+                    <div class="status-connected">
+                        <p><strong>Status:</strong> <span class="badge badge-success">Connected</span></p>
+                        <p><strong>Gmail Address:</strong> {{ gmail_address }}</p>
+                    </div>
+                {% else %}
+                    <div class="status-disconnected">
+                        <p><strong>Status:</strong> <span class="badge badge-warning">Not Connected</span></p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="settings-actions">
+                {% if google_calendar_connected %}
+                    <button class="btn btn-danger" id="disconnect-btn">Disconnect Google Account</button>
+                    <button class="btn btn-secondary" id="reconnect-btn">Reconnect Account</button>
+                {% else %}
+                    <button class="btn btn-primary" id="connect-btn">Connect Google Account</button>
+                {% endif %}
+            </div>
+            
+            <div class="settings-info" style="margin-top: 2rem; padding: 1rem; background-color: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 0.25rem;">
+                <h4 style="margin-top: 0; color: #1e40af;">Setup Instructions:</h4>
+                <ol style="margin: 1rem 0; padding-left: 1.5rem;">
+                    <li>Click "Connect Google Account" button</li>
+                    <li>Sign in with your Google account</li>
+                    <li>Grant permissions for Calendar and Gmail access</li>
+                    <li>You'll be redirected back once connected</li>
+                </ol>
+                <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 0;">Once connected, you can schedule interviews directly from the resume analysis page and the calendar will show your availability.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Other Settings Sections can be added here -->
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-page {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .page-header h1 {
+        margin: 0;
+        font-size: 1.875rem;
+        color: #1f2937;
+    }
+    
+    .settings-section {
+        margin-bottom: 2rem;
+    }
+    
+    .section-title {
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        font-size: 1.25rem;
+        color: #374151;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 1rem;
+    }
+    
+    .settings-description {
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+        line-height: 1.5;
+    }
+    
+    .settings-status {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background-color: #f9fafb;
+        border-radius: 0.375rem;
+        border-left: 4px solid #e5e7eb;
+    }
+    
+    .status-connected {
+        border-left-color: #10b981;
+    }
+    
+    .status-connected p {
+        margin: 0.5rem 0;
+        color: #1f2937;
+    }
+    
+    .status-disconnected {
+        border-left-color: #f59e0b;
+    }
+    
+    .status-disconnected p {
+        margin: 0;
+        color: #1f2937;
+    }
+    
+    .settings-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .settings-info ol li {
+        margin-bottom: 0.5rem;
+        color: #374151;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .badge-success {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-warning {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const connectBtn = document.getElementById('connect-btn');
+    const disconnectBtn = document.getElementById('disconnect-btn');
+    const reconnectBtn = document.getElementById('reconnect-btn');
+    
+    if (connectBtn) {
+        connectBtn.addEventListener('click', handleConnect);
+    }
+    
+    if (disconnectBtn) {
+        disconnectBtn.addEventListener('click', handleDisconnect);
+    }
+    
+    if (reconnectBtn) {
+        reconnectBtn.addEventListener('click', handleConnect);
+    }
+    
+    function handleConnect() {
+        fetch('/api/google-calendar/auth/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': utils.getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.auth_url) {
+                window.location.href = data.auth_url;
+            } else {
+                utils.showAlert(data.error || 'Failed to initiate Google auth', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            utils.showAlert('Failed to connect Google account', 'error');
+        });
+    }
+    
+    function handleDisconnect() {
+        if (!confirm('Are you sure you want to disconnect your Google account? You will need to reconnect to schedule interviews.')) {
+            return;
+        }
+        
+        fetch('/api/google-calendar/disconnect/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': utils.getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                utils.showAlert('Disconnected from Google Calendar', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                utils.showAlert(data.error || 'Failed to disconnect', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            utils.showAlert('Failed to disconnect', 'error');
+        });
+    }
+    
+    // Admin: Save OAuth client credentials
+    const saveBtn = document.getElementById('save-client-creds');
+    const clearBtn = document.getElementById('clear-client-creds');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const clientId = document.getElementById('google_client_id').value || '';
+            const clientSecret = document.getElementById('google_client_secret').value || '';
+            const form = new FormData();
+            form.append('google_client_id', clientId);
+            form.append('google_client_secret', clientSecret);
+
+            fetch(window.location.pathname, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': utils.getCsrfToken()
+                },
+                body: form
+            })
+            .then(resp => resp.json())
+            .then(data => {
+                if (data.success) {
+                    utils.showAlert('Saved Google OAuth credentials', 'success');
+                } else {
+                    utils.showAlert(data.error || 'Failed to save credentials', 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                utils.showAlert('Failed to save credentials', 'error');
+            });
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('google_client_id').value = '';
+            document.getElementById('google_client_secret').value = '';
+        });
+    }
+});
+</script>
+{% endblock %}

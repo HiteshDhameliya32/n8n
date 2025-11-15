@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Job Description Management - AI Resume Checker{% endblock %}
+
+{% block content %}
+<div class="job-descriptions-page">
+    <div class="page-header">
+        <h1>Job Description Management</h1>
+        <button class="btn btn-primary" id="add-job-desc-btn">
+            <span class="btn-icon">➕</span>
+            Add Job Description
+        </button>
+    </div>
+
+    <!-- Job Descriptions Table -->
+    <div class="table-container card">
+        <div class="table-header">
+            <h2>Saved Job Descriptions</h2>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table" id="job-desc-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>File Name</th>
+                        <th>Upload Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="job-desc-tbody">
+                    <!-- Table rows will be populated dynamically -->
+                    <tr class="empty-row">
+                        <td colspan="4" class="text-center">No job descriptions saved yet. <button class="btn-link" id="add-first-job-desc">Add your first job description</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Job Description Modal -->
+<div class="modal" id="job-desc-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title">Add Job Description</h2>
+            <button class="modal-close" id="close-modal">&times;</button>
+        </div>
+        <form id="job-desc-form" class="modal-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="job-title" class="form-label">Title <span class="required">*</span></label>
+                <input type="text" id="job-title" name="title" class="form-input" required>
+                <span class="form-error" id="job-title-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="job-file" class="form-label">Job Description File <span class="required">*</span></label>
+                <div class="file-upload-area" id="job-file-upload-area">
+                    <input type="file" id="job-file" name="file" accept=".pdf,.txt,.doc,.docx" class="file-input" required>
+                    <div class="file-upload-content">
+                        <span class="file-icon">📄</span>
+                        <p class="file-text">Click to upload or drag and drop</p>
+                        <p class="file-hint">PDF, TXT, DOC, DOCX files (Max 10MB)</p>
+                    </div>
+                    <div class="file-selected" id="job-file-selected" style="display: none;">
+                        <span class="file-name" id="job-file-name"></span>
+                        <button type="button" class="btn-remove-file" id="remove-job-file">✕</button>
+                    </div>
+                </div>
+                <span class="form-error" id="job-file-error"></span>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Upload Job Description</button>
+                <button type="button" class="btn btn-secondary" id="cancel-form-btn">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" id="delete-modal">
+    <div class="modal-content modal-small">
+        <div class="modal-header">
+            <h2>Confirm Delete</h2>
+            <button class="modal-close" id="close-delete-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete this job description? This action cannot be undone.</p>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+            <button class="btn btn-secondary" id="cancel-delete-btn">Cancel</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/job_descriptions.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,38 @@
+🚀 Built a Smart LinkedIn Profile Finder — powered by AI + n8n!
+
+Ever wished you could find exactly the right LinkedIn profiles based on role, industry, and location — automatically?
+I just built a workflow that does exactly that 👇
+
+⚙️ How it works:
+1️⃣ You enter any role + company/industry + location (like “Head of Growth | Fintech | Mumbai”)
+2️⃣ The workflow searches LinkedIn profiles via Google and scrapes key info like:
+
+👤 Name
+
+💼 Position & Company
+
+🌍 Location
+
+🔗 Direct LinkedIn URL
+
+🧠 Snippet or description
+3️⃣ It then neatly exports everything to Google Sheets for easy access & sharing.
+
+💡 This means you can build curated lists of:
+
+Potential leads for outreach
+
+Industry experts for interviews
+
+Hiring prospects for your startup
+
+Or even build your own mini “LinkedIn data assistant”
+
+And the best part — it runs hands-free using n8n + custom JS logic for pagination, filtering, and cleanup.
+
+🔥 Next step: Automating profile enrichment (company, contact info, domain links) to make it a full lead-gen powerhouse.
+
+Would you like me to share the step-by-step setup or a ready-to-use workflow JSON? 🤔
+Drop a 💬 “YES” if you’d like to try it out!
+
+#Automation #n8n #LinkedIn #AIworkflow #nocode #leadgeneration #automationtools #aiautomation

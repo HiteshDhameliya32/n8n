@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Resume - AI Resume Checker{% endblock %}
+
+{% block content %}
+<div class="upload-page">
+    <div class="page-header">
+        <h1>Upload Resume</h1>
+        <p>Upload a resume PDF file for AI analysis</p>
+    </div>
+
+    <div class="upload-form-container card">
+        <form id="upload-form" class="upload-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Resume Upload -->
+            <div class="form-section">
+                <div class="form-group">
+                    <label for="resume-file" class="form-label">Resume (PDF only) <span class="required">*</span></label>
+                    <div class="file-upload-area" id="file-upload-area">
+                        <input type="file" id="resume-file" name="resume_file" accept=".pdf" class="file-input" required>
+                        <div class="file-upload-content">
+                            <span class="file-icon">📄</span>
+                            <p class="file-text">Click to upload or drag and drop</p>
+                            <p class="file-hint">PDF files only (Max 10MB)</p>
+                        </div>
+                        <div class="file-selected" id="file-selected" style="display: none;">
+                            <span class="file-name" id="file-name"></span>
+                            <button type="button" class="btn-remove-file" id="remove-file">✕</button>
+                        </div>
+                    </div>
+                    <span class="form-error" id="resume-file-error"></span>
+                </div>
+            </div>
+
+            <!-- Progress Indicator -->
+            <div class="progress-section" id="progress-section" style="display: none;">
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <span class="progress-text" id="progress-text">0%</span>
+                </div>
+                <p class="progress-status" id="progress-status">Preparing upload...</p>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-large" id="submit-btn">
+                    <span class="btn-icon">📤</span>
+                    Upload Resume
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div id="upload-messages" class="messages"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/upload.js' %}"></script>
+{% endblock %}

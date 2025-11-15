@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - AI Resume Checker{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <!-- Summary Widgets -->
+    <div class="widgets-grid">
+        <div class="widget card">
+            <div class="widget-icon">📄</div>
+            <div class="widget-content">
+                <h3 class="widget-title">Total Resumes</h3>
+                <p class="widget-value" id="total-resumes">0</p>
+            </div>
+        </div>
+        <div class="widget card">
+            <div class="widget-icon">⭐</div>
+            <div class="widget-content">
+                <h3 class="widget-title">Average Score</h3>
+                <p class="widget-value" id="avg-score">0%</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumes Table -->
+    <div class="table-container card">
+        <div class="table-header">
+            <h2>Uploaded Resumes</h2>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table" id="resumes-table">
+                <thead>
+                    <tr>
+                        <th>Candidate Name</th>
+                        <th>Email</th>
+                        <th>Job Description</th>
+                        <th>Created At</th>
+                        <th>Overall Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="resumes-tbody">
+                    <!-- Table rows will be populated dynamically -->
+                    <tr class="empty-row">
+                        <td colspan="6" class="text-center">No resumes uploaded yet. <a href="{% url 'upload_resume' %}">Upload your first resume</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="table-pagination" id="pagination">
+            <!-- Pagination will be added dynamically -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}
+
