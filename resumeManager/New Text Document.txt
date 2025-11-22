@@ -1,0 +1,25 @@
+🚀 Introducing My Automated Resume Manager – Powered by n8n + RAG
+
+Over the past few weeks, I’ve been building something that solves a real productivity and hiring bottleneck.
+I’m excited to share an automation workflow that identifies potential candidates and schedules interviews — in ONE click.
+
+🧠 How it works
+🔹 Uses RAG (Retrieval-Augmented Generation) to scan resumes and extract relevant skills & experience
+🔹 Automatically matches profiles with the job requirements to identify high-potential candidates
+🔹 Sends personalized interview emails directly from the workflow
+🔹 Checks availability + books calendar slots instantly
+🔹 Final result: you always know who is shortlisted and when the interview is scheduled
+
+💼 Why this matters
+Recruiters and hiring teams spend hours manually filtering resumes, sending emails, and coordinating time slots.
+This workflow reduces that effort from hours → minutes while improving accuracy and candidate experience.
+
+⚙️ Tech Stack
+✔ n8n
+✔ RAG-based resume intelligence
+✔ Email automation
+✔ Calendar scheduling (Google / Outlook supported)
+
+📌 If you’d like to see this in action or want something similar for your company, feel free to reach out or drop a comment below.
+
+🔗 Working on more automation tools that turn repetitive workflows into seamless operations — stay tuned!
