@@ -540,8 +540,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set default date to tomorrow
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
-        document.getElementById('interview-date').value = tomorrow.toISOString().split('T')[0];
-        
+        const interviewDateInput = document.getElementById('interview-date');
+        if (interviewDateInput) {
+            interviewDateInput.value = tomorrow.toISOString().split('T')[0];
+            // When the selected date changes, reload events for that date
+            interviewDateInput.addEventListener('change', loadCalendarEvents);
+        }
+
         // Load calendar events if Google Calendar is connected
         loadCalendarEvents();
         
@@ -563,17 +568,61 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function loadCalendarEvents() {
+        console.log('Loading calendar events...');
+        const eventsContainer = document.getElementById('calendar-events');
+        if (!eventsContainer) return;
+
+        // Determine selected interview date (YYYY-MM-DD) if present
+        const dateInput = document.getElementById('interview-date');
+        const selectedDate = dateInput && dateInput.value ? dateInput.value : null;
+
         fetch('/api/google-calendar/events/')
-            .then(response => response.json())
+            .then(response => {
+                console.log('Calendar events response status:', response.status);
+                return response.json();
+            })
             .then(data => {
-                const eventsContainer = document.getElementById('calendar-events');
-                if (data.events && data.events.length > 0) {
+                console.log('Calendar events data:', data);
+                if (data.error) {
+                    console.error('Calendar error:', data.error);
+                    eventsContainer.innerHTML = `<p style="text-align: center; color: #ef4444; padding: 1rem;"><strong>Error:</strong> ${data.error}<br><small><a href="/settings/" target="_blank">Fix in Settings</a></small></p>`;
+                    return;
+                }
+
+                let events = Array.isArray(data.events) ? data.events.slice() : [];
+
+                // Helper to get local YYYY-MM-DD for a date/time string
+                function localYYYYMMDD(dt) {
+                    try {
+                        const d = new Date(dt);
+                        const yyyy = d.getFullYear();
+                        const mm = String(d.getMonth() + 1).padStart(2, '0');
+                        const dd = String(d.getDate()).padStart(2, '0');
+                        return `${yyyy}-${mm}-${dd}`;
+                    } catch (e) {
+                        return null;
+                    }
+                }
+
+                if (selectedDate) {
+                    // Filter events to only those that fall on the selected date (local timezone)
+                    events = events.filter(ev => {
+                        const startLocal = localYYYYMMDD(ev.start);
+                        const endLocal = localYYYYMMDD(ev.end);
+                        // include event if start or end matches the selected date
+                        return startLocal === selectedDate || endLocal === selectedDate;
+                    });
+                }
+
+                if (events.length > 0) {
+                    console.log('Showing', events.length, 'events for date:', selectedDate);
                     let eventsHTML = '<div style="font-size: 0.875rem;">';
-                    data.events.forEach(event => {
+                    events.forEach(event => {
                         const eventDate = new Date(event.start).toLocaleString();
+                        // pass the element reference for highlight when clicked
                         eventsHTML += `
                             <div style="padding: 0.75rem; border-bottom: 1px solid #e5e7eb; cursor: pointer;" 
-                                 onclick="selectEventTime('${event.start}', '${event.end}')"
+                                 onclick="selectEventTime('${event.start}', '${event.end}', this)"
                                  title="Click to schedule interview">
                                 <p style="margin: 0; font-weight: 500; color: #1f2937;">${event.title}</p>
                                 <p style="margin: 0.25rem 0; color: #6b7280; font-size: 0.75rem;">${eventDate}</p>
@@ -583,25 +632,47 @@ document.addEventListener('DOMContentLoaded', function() {
                     eventsHTML += '</div>';
                     eventsContainer.innerHTML = eventsHTML;
                 } else {
-                    eventsContainer.innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 1rem;">No upcoming events<br><small>Connect Google Calendar from Settings</small></p>';
+                    console.log('No events found for selected date:', selectedDate);
+                    const msg = selectedDate ? `No events found for ${selectedDate}` : 'No upcoming events';
+                    eventsContainer.innerHTML = `<p style="text-align: center; color: #9ca3af; padding: 1rem;">${msg}<br><small>Connect Google Calendar from Settings</small></p>`;
                 }
             })
             .catch(error => {
-                console.log('Calendar not connected:', error);
-                document.getElementById('calendar-events').innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 1rem;">Calendar not available<br><small><a href="/settings/" target="_blank">Connect in Settings</a></small></p>';
+                console.error('Calendar events fetch error:', error);
+                eventsContainer.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 1rem;"><strong>Failed to load events</strong><br><small><a href="/settings/" target="_blank">Check Settings</a></small></p>';
             });
     }
     
-    function selectEventTime(startTime, endTime) {
+    function selectEventTime(startTime, endTime, el) {
         const startDate = new Date(startTime);
-        const dateStr = startDate.toISOString().split('T')[0];
-        const timeStr = startDate.toTimeString().split(':').slice(0, 2).join(':');
-        
-        document.getElementById('interview-date').value = dateStr;
-        document.getElementById('interview-time').value = timeStr;
-        
-        // Highlight the selected time
-        event.currentTarget.style.backgroundColor = '#dbeafe';
+        // Use local date string for input (YYYY-MM-DD)
+        const yyyy = startDate.getFullYear();
+        const mm = String(startDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(startDate.getDate()).padStart(2, '0');
+        const dateStr = `${yyyy}-${mm}-${dd}`;
+
+        const hours = String(startDate.getHours()).padStart(2, '0');
+        const minutes = String(startDate.getMinutes()).padStart(2, '0');
+        const timeStr = `${hours}:${minutes}`;
+
+        const dateInput = document.getElementById('interview-date');
+        const timeInput = document.getElementById('interview-time');
+        if (dateInput) dateInput.value = dateStr;
+        if (timeInput) timeInput.value = timeStr;
+
+        // Remove previous highlights
+        try {
+            const eventsContainer = document.getElementById('calendar-events');
+            if (eventsContainer) {
+                const children = eventsContainer.querySelectorAll('div[onclick]');
+                children.forEach(ch => ch.style.backgroundColor = '');
+            }
+        } catch (e) {
+            // ignore
+        }
+
+        // Highlight the selected element
+        if (el && el.style) el.style.backgroundColor = '#dbeafe';
     }
     
     window.closeEmailCalendarModal = function() {

@@ -67,27 +67,35 @@
             <p>Your Google Calendar account has been connected successfully.</p>
             <p><strong>Email:</strong> {{ email }}</p>
             <p>You can now schedule interviews and access your calendar from the resume analysis page.</p>
-            <button class="button" onclick="window.close(); window.opener.location.reload();">Close and Continue</button>
+            <button class="button" onclick="goBackToSettings();">Close and Continue</button>
         {% else %}
             <h1 class="error">✗ Connection Failed</h1>
             <p>There was an error connecting your Google Calendar account:</p>
             <p><strong>{{ error }}</strong></p>
-            <button class="button" onclick="window.close();">Close</button>
+            <button class="button" onclick="goBackToSettings();">Close</button>
         {% endif %}
     </div>
     
     <script>
-        // Auto-close after 3 seconds if successful
+        function goBackToSettings() {
+            // If opened from settings page, go back to it
+            if (window.opener) {
+                window.opener.location.href = '/settings/';
+                window.close();
+            } else {
+                // If opened directly, redirect to settings
+                window.location.href = '/settings/';
+            }
+        }
+        
+        // Auto-redirect after 3 seconds if successful
         document.addEventListener('DOMContentLoaded', function() {
             var container = document.querySelector('.container');
             var isSuccess = container.getAttribute('data-success') === 'true';
             
             if (isSuccess) {
                 setTimeout(function() {
-                    window.close();
-                    if (window.opener) {
-                        window.opener.location.reload();
-                    }
+                    goBackToSettings();
                 }, 3000);
             }
         });

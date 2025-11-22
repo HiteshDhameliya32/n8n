@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from .models import Resume, JobDescription
 from pinecone import Pinecone
 
@@ -823,6 +824,7 @@ def settings_page(request):
 def google_calendar_auth(request):
     """Initiate Google Calendar OAuth flow"""
     import secrets
+    from urllib.parse import quote
     from django.contrib.sessions.models import Session
     
     # Generate state for CSRF protection
@@ -840,10 +842,13 @@ def google_calendar_auth(request):
             'error': 'Google Client ID not configured. Ask an admin to set it on the Settings page.'
         }, status=400)
     
+    # URL-encode the redirect URI for the OAuth request
+    encoded_redirect_uri = quote(redirect_uri, safe='')
+    
     auth_url = (
         f"https://accounts.google.com/o/oauth2/v2/auth?"
         f"client_id={client_id}&"
-        f"redirect_uri={redirect_uri}&"
+        f"redirect_uri={encoded_redirect_uri}&"
         f"response_type=code&"
         f"scope=https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.send&"
         f"state={state}&"
@@ -959,6 +964,7 @@ def google_calendar_disconnect(request):
 
 
 @require_http_methods(["GET"])
+@login_required(login_url='login')
 def get_google_calendar_events(request):
     """Get upcoming events from Google Calendar"""
     from .models import GoogleCalendarSettings
@@ -971,8 +977,11 @@ def get_google_calendar_events(request):
         else:
             settings_obj = GoogleCalendarSettings.objects.first()
 
-        if not settings_obj or not settings_obj.google_refresh_token:
-            return JsonResponse({'error': 'Google Calendar not connected'}, status=400)
+        if not settings_obj:
+            return JsonResponse({'error': 'Google Calendar settings not found. Please connect your account in Settings.'}, status=400)
+        
+        if not settings_obj.google_refresh_token:
+            return JsonResponse({'error': 'Google Calendar not connected. Please reconnect in Settings.'}, status=400)
 
         # Get client credentials from DB-config or settings
         from .models import GoogleOAuthAppConfig
@@ -981,7 +990,7 @@ def get_google_calendar_events(request):
         client_secret = app_cfg.client_secret if app_cfg and app_cfg.client_secret else getattr(settings, 'GOOGLE_CLIENT_SECRET', None)
 
         if not client_id or not client_secret:
-            return JsonResponse({'error': 'Google credentials not configured'}, status=400)
+            return JsonResponse({'error': 'Google OAuth credentials not configured. Admin needs to set them in Settings.'}, status=400)
 
         token_url = 'https://oauth2.googleapis.com/token'
         token_data = {
@@ -992,8 +1001,18 @@ def get_google_calendar_events(request):
         }
         
         response = requests.post(token_url, data=token_data, timeout=10)
+        
+        if response.status_code != 200:
+            error_msg = response.json().get('error_description', response.text)
+            print(f"[DEBUG] Token refresh failed: {error_msg}")
+            return JsonResponse({'error': f'Failed to refresh Google token: {error_msg}'}, status=400)
+        
         tokens = response.json()
         access_token = tokens.get('access_token')
+        
+        if not access_token:
+            print(f"[DEBUG] No access token in response: {tokens}")
+            return JsonResponse({'error': 'Failed to get access token from Google. Try reconnecting in Settings.'}, status=400)
         
         # Get calendar events
         headers = {'Authorization': f"Bearer {access_token}"}
@@ -1010,6 +1029,12 @@ def get_google_calendar_events(request):
         }
         
         events_response = requests.get(calendar_url, headers=headers, params=params, timeout=10)
+        
+        if events_response.status_code != 200:
+            error_msg = events_response.json().get('error', {}).get('message', events_response.text)
+            print(f"[DEBUG] Failed to fetch events: {error_msg}")
+            return JsonResponse({'error': f'Failed to fetch calendar events: {error_msg}'}, status=400)
+        
         events_data = events_response.json()
         
         events = []
@@ -1025,7 +1050,10 @@ def get_google_calendar_events(request):
         return JsonResponse({'events': events})
         
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        print(f"[DEBUG] Exception in get_google_calendar_events: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': f'Server error: {str(e)}'}, status=500)
 
 
 @ensure_csrf_cookie
@@ -1099,10 +1127,36 @@ def create_user(request):
             email=email,
             password=password
         )
+        # Send welcome email with credentials if email provided
+        email_sent = False
+        if email:
+            try:
+                from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None)
+                if not from_email:
+                    # fallback to a sensible default using host
+                    from_email = f"noreply@{request.get_host()}"
+
+                login_url = request.build_absolute_uri('/login/')
+                subject = 'Your account for Resume Checker'
+                message = (
+                    f"Hello {username},\n\n"
+                    f"welcome to the team.\n\n"
+                    f"Username: {username}\n"
+                    f"Password: {password}\n\n"
+                    f"You can login here: {login_url}\n\n"
+                )
+
+                send_mail(subject, message, from_email, [email], fail_silently=False)
+                email_sent = True
+            except Exception as e:
+                # Log and continue — don't fail user creation if email can't be sent
+                print(f"Failed to send user creation email to %s: %s" % (email, str(e)))
+
         return JsonResponse({
             'success': True,
             'user_id': user.id,
-            'message': f'User "{username}" created successfully'
+            'message': f'User "{username}" created successfully',
+            'email_sent': email_sent
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

@@ -1,0 +1,266 @@
+{
+  "name": "webhook rag resume reviewer",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=you are an expert in HR field, you are very efficient in finding good people based on company need just by looking at their resume \nalwasy use available tool- pinecone vector store\nyou will check the resume and give me following things\nCandidate Summary,\ncandidates info\n    1.name\n    2.mail\n    3.phone number\n    4.linkedin url\n    5.address,\ncandidate applied for - If the applied position is not found, return null,\ncandidate skills - each skill with it's own score based on resume,\ncandidate full Education details - include Certifications or awards if any,\ncandidate languages known,\ncandidate total past experience (years-months)\ncandidate past experience(time period - place),\nprojects worked on - description,\nSkill Match Score(number),\nRecommendations,\nwhy i hire and don't hire that candidate,\nneeds human review - yes/no,\nand explain your decision,\ndo i select for position which he applied to - yes/no,\npreferred position for candidate other then appliend - null if not suitable for any,\nfinal score(number)\n\nrules:\ncandidates should be reviewed without any bias\ndon't assume anything if not present\nUse only the provided resume text to make your judgments.\nDo not add information or assumptions beyond this text.\nIf any information is missing or unclear, set the value to null or an empty array.\nNever invent or infer information not present\nFor all scores, use a scale from 0 to 100.\nBase the score purely on the resume content.\n\n\ntext extracted from resume:\n{{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        592,
+        0
+      ],
+      "id": "d0a6235e-2837-4d9e-b275-7a9000af5ed0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "1322859b-5961-4426-96aa-9c20011a3d6a",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        448,
+        224
+      ],
+      "id": "d32a02a4-63de-46c1-bf1e-e8d4a9a39954",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "retrieve info from this database for hiring criteria, job descriptions, and best-practice data before responding",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8n-rag-resume-checker",
+          "mode": "list",
+          "cachedResultName": "n8n-rag-resume-checker"
+        },
+        "topK": 10,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        224
+      ],
+      "id": "1126cae8-f4a5-4283-8b50-c36e7123e94f",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "qUPviTuhledEbczU",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        656,
+        432
+      ],
+      "id": "9282ea65-d1d9-4e7c-b939-7231ffb0f354",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \n  \"candidate_summary\": \"\",\n  \"candidate_info\": {\n    \"name\": \"\",\n    \"email\": \"\",\n    \"phone_number\": \"\",\n    \"linkedin_url\": \"\",\n    \"address\": \"\" \n  }, \n  \"candidate_applied_for\": \"\",\n  \"candidate_skills\": [\"skill-1\", \"skill-2\", \"skill-3\"],\n  \"candidate_education\": [\n    {\n    \"degree\": \"degree 1\",\n    \"institution\": \"institution name\",\n    \"year_of_graduation\": \"graguation year\"\n    },\n    {\n    \"degree\": \"degree 2\",\n    \"institution\": \"institution name\",\n    \"year_of_graduation\": \"graguation year\"\n    },\n    {\n    \"certifications_and_awards\": [\"certifications_or_awards-1\", \"certifications_or_awards-2\"]\n    }\n  ], \n  \"candidate_languages_known\": [\"language-1\", \"language-2\"],\n  \"cadidate_total_past_experience\": \"2years-5months\",\n  \"candidate_experience\": [\n    {\n      \"time_period\": \"\",\n      \"place\": \"\",\n      \"role\": \"\" \n    }, \n    { \n      \"time_period\": \"\",\n      \"place\": \"\",\n      \"role\": \"\" \n    } \n  ],\n  \"projects_worked_on\": [\"project-1\", \"project-2\", \"project-3\"],\n  \"skill_match_score\": \"skill match score\",\n  \"recommendations\": \"\",\n  \"final_decision\": {\n    \"selected_for_applied_position\": \"yes/no\",\n    \"preferred_other_position\": \"\",\n    \"final_score\": \"final score\"\n  },\n  \"why_hire_candidate\": \"\",\n  \"why_not_hire_candidate\": \"\",\n  \"needs_human_review\": \"yes/no\",\n  \"explanation_of_decision\": \"\"\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        864,
+        224
+      ],
+      "id": "7e868263-3c54-428c-9ff7-13599de0f9b8",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        944,
+        432
+      ],
+      "id": "5e258cd4-f3a6-43df-a079-951a149ff4a4",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "6ae84ed5-8c65-4724-985d-4c57b5446122",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -16,
+        0
+      ],
+      "id": "041f8c35-db0f-470a-8646-32ef3b4ee32f",
+      "name": "Webhook",
+      "webhookId": "6ae84ed5-8c65-4724-985d-4c57b5446122"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        992,
+        0
+      ],
+      "id": "508c3837-9fe5-4a5d-bf1b-4491a35aed57",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ac0638b1-b429-43ee-ade3-a61b36b6b42b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae21f7ff983ee929f98e8d7968bbd21b49d1a44f2e129169348ba847d37dd5ac"
+  },
+  "id": "BjzoPjBHdKkZQxW7",
+  "tags": []
+}
