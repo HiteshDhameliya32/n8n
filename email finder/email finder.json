@@ -1,0 +1,1024 @@
+{
+  "name": "email finder",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        -96
+      ],
+      "id": "cd3edd6c-a54b-4c1c-a9b5-0d9b8fb26824",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1MeQdveFXA4ihTc7FrFyl_JdBR0J2M3ydLhkwlnlChh4",
+          "mode": "list",
+          "cachedResultName": "linkedin profiles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MeQdveFXA4ihTc7FrFyl_JdBR0J2M3ydLhkwlnlChh4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MeQdveFXA4ihTc7FrFyl_JdBR0J2M3ydLhkwlnlChh4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -576,
+        -96
+      ],
+      "id": "e96cc11a-f2c3-45fb-acdd-bd16f7eb4e76",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5ewVvwFTLDlJ7YzJ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=you have to identify the domain of the company from provided data.\nif domain is not provided then make a search term that help me find the domain which should end with \"official site\"\nmake value \"null\" if not available\ndon't hellucinate or make assumptions\nstrictly output in this json format\n{\n  \"domain\": \"company-domain/null\",\n  \"search term\": \"search-term/null\"\n}\n\ndata:\n name:{{ $json.name }}\n position:{{ $json.position }}\n description:{{ $json.description }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -352,
+        -96
+      ],
+      "id": "69d5390c-fbb4-497f-b1e3-17ca778343af",
+      "name": "AI Agent",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        128
+      ],
+      "id": "3cdadbca-84da-4563-aef8-5c7c5e7a2937",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get input array\nconst itemsList = items;\n\n// Convert each wrapped JSON string into a usable object\nconst cleaned = itemsList.map(item => {\n  let raw = item.json.output;\n\n  // Remove ```json block formatting\n  raw = raw.replace(/```json|```/g, \"\").trim();\n\n  // Parse to actual JSON\n  const data = JSON.parse(raw);\n\n  return { json: data };\n});\n\n// Return cleaned objects\nreturn cleaned;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "705066c1-98cf-4f32-9071-663157062e14",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.domain }}",
+                    "rightValue": "=null",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    },
+                    "id": "47061173-9c15-44c8-9678-a15b691cefe8"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "domain"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2d15a11e-14e1-4c30-b7b8-c561df025d04",
+                    "leftValue": "={{ $json[\"search term\"] }}",
+                    "rightValue": "=null",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "no domain"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "645704a6-c18d-43d0-b613-42de5905d747",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "url": "https://api.hunter.io/v2/email-finder?",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "domain",
+              "value": "={{ $json.domain }}"
+            },
+            {
+              "name": "first_name",
+              "value": "={{ $('Get row(s) in sheet').item.json.name }}"
+            },
+            {
+              "name": "last_name",
+              "value": "={{ $('Get row(s) in sheet').item.json.name }}"
+            },
+            {
+              "name": "api_key",
+              "value": "c9cc42a9429b73f2c5089af2eab71090db4c4c7c"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        -192
+      ],
+      "id": "9fab98ab-0c8d-4e0b-8f07-55cf6d84490a",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/customsearch/v1",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyCR4ngOH9YswuVtkBkwDQpF7dv4azgqE1Y"
+            },
+            {
+              "name": "cx",
+              "value": "c0fa13214e7ee42a4"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json[\"search term\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "2c4e51f0-7769-47c1-bb59-0b1800d4ae65",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1MeQdveFXA4ihTc7FrFyl_JdBR0J2M3ydLhkwlnlChh4",
+          "mode": "list",
+          "cachedResultName": "linkedin profiles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MeQdveFXA4ihTc7FrFyl_JdBR0J2M3ydLhkwlnlChh4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MeQdveFXA4ihTc7FrFyl_JdBR0J2M3ydLhkwlnlChh4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "name": "={{ $('Get row(s) in sheet').item.json.name }}",
+            "email": "={{ $json.data.email }}",
+            "domain": "={{ $json.data.domain }}"
+          },
+          "matchingColumns": [
+            "name"
+          ],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "position",
+              "displayName": "position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "profile links",
+              "displayName": "profile links",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "img link",
+              "displayName": "img link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "domain",
+              "displayName": "domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "searched position",
+              "displayName": "searched position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "searched industry",
+              "displayName": "searched industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "searched region",
+              "displayName": "searched region",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        -192
+      ],
+      "id": "af042f70-b402-48d9-a432-0cb026400e36",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5ewVvwFTLDlJ7YzJ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.hunter.io/v2/email-finder?",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "domain",
+              "value": "={{ $json.domain }}"
+            },
+            {
+              "name": "first_name",
+              "value": "={{ $('Get row(s) in sheet').item.json.name }}"
+            },
+            {
+              "name": "last_name",
+              "value": "={{ $('Get row(s) in sheet').item.json.name }}"
+            },
+            {
+              "name": "api_key",
+              "value": "c9cc42a9429b73f2c5089af2eab71090db4c4c7c"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1472,
+        0
+      ],
+      "id": "441c3f68-d279-4fb5-a6fb-f64483d94950",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code/Function node - extract cleaned domains from various input shapes\n\nfunction addFromUrlString(urlStr, domainSet) {\n  if (!urlStr || typeof urlStr !== 'string') return;\n  urlStr = urlStr.trim();\n  urlStr = urlStr.replace(/<[^>]*>/g, ''); // remove HTML tags\n  try {\n    const u = urlStr.startsWith('http://') || urlStr.startsWith('https://')\n      ? new URL(urlStr)\n      : new URL('https://' + urlStr);\n    let host = u.hostname.toLowerCase();\n    if (host.startsWith('www.')) host = host.slice(4);\n    if (host) domainSet.add(host);\n  } catch (e) {\n    const m = urlStr.match(/([a-z0-9.-]+\\.[a-z]{2,})(\\/|$)/i);\n    if (m && m[1]) {\n      let host = m[1].toLowerCase();\n      if (host.startsWith('www.')) host = host.slice(4);\n      domainSet.add(host);\n    }\n  }\n}\n\nfunction processEntry(entry, domainSet) {\n  if (!entry || typeof entry !== 'object') return;\n  if (entry.link) addFromUrlString(entry.link, domainSet);\n  if (entry.formattedUrl) addFromUrlString(entry.formattedUrl, domainSet);\n  if (entry.displayLink) addFromUrlString(entry.displayLink, domainSet);\n\n  if (Array.isArray(entry.items)) {\n    entry.items.forEach(it => {\n      if (it.link) addFromUrlString(it.link, domainSet);\n      if (it.formattedUrl) addFromUrlString(it.formattedUrl, domainSet);\n      if (it.displayLink) addFromUrlString(it.displayLink, domainSet);\n    });\n  }\n}\n\n// MAIN: iterate over each incoming n8n item\nreturn items.map(item => {\n  const domains = new Set();\n  const j = item.json;\n\n  if (Array.isArray(j.data)) {\n    j.data.forEach(obj => processEntry(obj, domains));\n  } else if (Array.isArray(j.items)) {\n    j.items.forEach(obj => processEntry(obj, domains));\n  } else if (j.link || j.displayLink || j.formattedUrl) {\n    processEntry(j, domains);\n  } else if (Array.isArray(j)) {\n    j.forEach(obj => processEntry(obj, domains));\n  } else {\n    Object.keys(j || {}).forEach(k => {\n      const v = j[k];\n      if (Array.isArray(v)) v.forEach(obj => processEntry(obj, domains));\n    });\n  }\n\n  // return one item per original input item\n  return { json: { domains: Array.from(domains) } };\n});\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "9a746e3d-5481-472d-aa35-944f8c0701be",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=you have to simple matching and finding task where i will give a search term and list of domain you have to find the read domain from that \n\nstrictly output in json\n{\n  \"domain\": \"domain\"\n}\n\nsearch term:  {{ $('Switch').item.json[\"search term\"] }}\nlist of domains: {{ $json.domains }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "96fb1bbb-c9ac-4707-ac0b-7508c5028e3d",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        976,
+        224
+      ],
+      "id": "96d35781-3750-4a4e-8112-897681c92798",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0qx7MVBn4PpeYK6I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get input array\nconst itemsList = items;\n\n// Convert each wrapped JSON string into a usable object\nconst cleaned = itemsList.map(item => {\n  let raw = item.json.output;\n\n  // Remove ```json block formatting\n  raw = raw.replace(/```json|```/g, \"\").trim();\n\n  // Parse to actual JSON\n  const data = JSON.parse(raw);\n\n  return { json: data };\n});\n\n// Return cleaned objects\nreturn cleaned;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "89a7aaff-1c2e-4e1b-b37c-de1869ed13a3",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1MeQdveFXA4ihTc7FrFyl_JdBR0J2M3ydLhkwlnlChh4",
+          "mode": "list",
+          "cachedResultName": "linkedin profiles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MeQdveFXA4ihTc7FrFyl_JdBR0J2M3ydLhkwlnlChh4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MeQdveFXA4ihTc7FrFyl_JdBR0J2M3ydLhkwlnlChh4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "name": "={{ $('Get row(s) in sheet').item.json.name }}",
+            "domain": "={{ $json.data.domain }}",
+            "email": "={{ $json.data.email }}"
+          },
+          "matchingColumns": [
+            "name"
+          ],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "position",
+              "displayName": "position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "profile links",
+              "displayName": "profile links",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "img link",
+              "displayName": "img link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "domain",
+              "displayName": "domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "searched position",
+              "displayName": "searched position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "searched industry",
+              "displayName": "searched industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "searched region",
+              "displayName": "searched region",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1696,
+        0
+      ],
+      "id": "3787b1f4-eceb-4eea-866c-58b508ad5df7",
+      "name": "Append or update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "5ewVvwFTLDlJ7YzJ",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "HTTP Request": [
+      {
+        "json": {
+          "data": {
+            "first_name": "Aayush",
+            "last_name": "Choudhury",
+            "email": "aayush@scrut.io",
+            "score": 96,
+            "domain": "scrut.io",
+            "accept_all": false,
+            "position": "CEO",
+            "twitter": null,
+            "linkedin_url": "https://www.linkedin.com/in/aayushghoshc",
+            "phone_number": null,
+            "company": "Scrut Automation",
+            "sources": [
+              {
+                "domain": "linkedin.com",
+                "uri": "https://www.google.com/search?q=site:linkedin.com%20aayush%20choudhury%20scrut",
+                "extracted_on": "2025-01-07",
+                "last_seen_on": "2025-11-08",
+                "still_on_page": true
+              },
+              {
+                "domain": "scrut.io",
+                "uri": "https://scrut.io/dpa",
+                "extracted_on": "2023-07-23",
+                "last_seen_on": "2025-10-24",
+                "still_on_page": true
+              },
+              {
+                "domain": "scrut.io",
+                "uri": "https://scrut.io/post/caasm-an-emerging-need-for-organizations",
+                "extracted_on": "2023-07-23",
+                "last_seen_on": "2025-10-23",
+                "still_on_page": true
+              },
+              {
+                "domain": "limechat.ai",
+                "uri": "https://limechat.ai/legal/data-processing-agreement",
+                "extracted_on": "2024-10-06",
+                "last_seen_on": "2025-10-12",
+                "still_on_page": true
+              },
+              {
+                "domain": "cio.economictimes.indiatimes.com",
+                "uri": "https://cio.economictimes.indiatimes.com/tag/etciso",
+                "extracted_on": "2025-10-18",
+                "last_seen_on": "2025-10-18",
+                "still_on_page": true
+              },
+              {
+                "domain": "cio.economictimes.indiatimes.com",
+                "uri": "https://cio.economictimes.indiatimes.com/videos/aayush-ghosh-chowdhury-co-founder-scrut-automation-on-attack-surface-management/99120201",
+                "extracted_on": "2025-10-18",
+                "last_seen_on": "2025-10-18",
+                "still_on_page": true
+              },
+              {
+                "domain": "cio.economictimes.indiatimes.com",
+                "uri": "https://cio.economictimes.indiatimes.com/news/next-gen-technologies/scrut-automation-launches-regusense-a-unified-control-framework-for-indian-fintech-organizations/100017606",
+                "extracted_on": "2025-10-18",
+                "last_seen_on": "2025-10-18",
+                "still_on_page": true
+              },
+              {
+                "domain": "heaptalk.com",
+                "uri": "https://heaptalk.com/news/scrut-automation-grabs-new-fund-of-7-5m-aiming-to-reach-indonesias-market",
+                "extracted_on": "2025-08-09",
+                "last_seen_on": "2025-08-09",
+                "still_on_page": true
+              },
+              {
+                "domain": "ciso.economictimes.indiatimes.com",
+                "uri": "https://ciso.economictimes.indiatimes.com/news/cybercrime-fraud/regusense-by-scrut-automation-the-unified-compliance-framework-for-indian-fintechs/100069711",
+                "extracted_on": "2025-05-12",
+                "last_seen_on": "2025-05-12",
+                "still_on_page": true
+              },
+              {
+                "domain": "kmworld.com",
+                "uri": "https://kmworld.com/articles/news/news/scrut-automation-secures-%252410m-in-funding-round-to-help-companies-maintain-compliance-programs-163424.aspx",
+                "extracted_on": "2025-04-12",
+                "last_seen_on": "2025-04-12",
+                "still_on_page": true
+              },
+              {
+                "domain": "smartstateindia.com",
+                "uri": "https://smartstateindia.com/scrut-automation-launches-regusense-the-unified-control-framework-for-indian-fintech-organizations",
+                "extracted_on": "2025-01-17",
+                "last_seen_on": "2025-01-17",
+                "still_on_page": true
+              },
+              {
+                "domain": "tribunetidbits.com",
+                "uri": "https://tribunetidbits.com/scrut-automation-raises-10m-in-growth-capital-from-lightspeed-and-massmutual-ventures-to-accelerate-growth-in-north-america",
+                "extracted_on": "2024-11-14",
+                "last_seen_on": "2024-11-14",
+                "still_on_page": true
+              },
+              {
+                "domain": "uniqueanalyst.com",
+                "uri": "https://uniqueanalyst.com/2024/04/03/scrut-automation-raises-10m-in-growth-capital-from-lightspeed-and-massmutual-ventures-to-accelerate-growth-in-north-america",
+                "extracted_on": "2024-11-13",
+                "last_seen_on": "2024-11-13",
+                "still_on_page": true
+              },
+              {
+                "domain": "scrut.io",
+                "uri": "https://scrut.io/podcasts",
+                "extracted_on": "2024-10-29",
+                "last_seen_on": "2024-10-29",
+                "still_on_page": true
+              },
+              {
+                "domain": "top10digest.com",
+                "uri": "https://top10digest.com/scrut-automation-raises-10m-in-growth-capital-from-lightspeed-and-massmutual-ventures-to-accelerate-growth-in-north-america",
+                "extracted_on": "2024-09-28",
+                "last_seen_on": "2024-09-28",
+                "still_on_page": true
+              },
+              {
+                "domain": "wisconsinbeacon.com",
+                "uri": "https://wisconsinbeacon.com/scrut-automation-raises-10m-in-growth-capital-from-lightspeed-and-massmutual-ventures-to-accelerate-growth-in-north-america",
+                "extracted_on": "2024-09-27",
+                "last_seen_on": "2024-09-27",
+                "still_on_page": true
+              },
+              {
+                "domain": "infostreamline.com",
+                "uri": "https://infostreamline.com/scrut-automation-raises-10m-in-growth-capital-from-lightspeed-and-massmutual-ventures-to-accelerate-growth-in-north-america",
+                "extracted_on": "2024-09-27",
+                "last_seen_on": "2024-09-27",
+                "still_on_page": true
+              },
+              {
+                "domain": "northheadlines.com",
+                "uri": "https://northheadlines.com/scrut-automation-raises-10m-in-growth-capital-from-lightspeed-and-massmutual-ventures-to-accelerate-growth-in-north-america",
+                "extracted_on": "2024-09-27",
+                "last_seen_on": "2024-09-27",
+                "still_on_page": true
+              },
+              {
+                "domain": "saasboomi.org",
+                "uri": "https://saasboomi.org/saas/operations/empowering-businesses-with-advisory-board",
+                "extracted_on": "2024-07-28",
+                "last_seen_on": "2024-07-28",
+                "still_on_page": true
+              },
+              {
+                "domain": "newspostbox.com",
+                "uri": "https://newspostbox.com/scrut-automation-raises-10m-in-growth-capital-from-lightspeed-and-massmutual-ventures-to-accelerate-growth-in-north-america",
+                "extracted_on": "2024-07-18",
+                "last_seen_on": "2024-07-18",
+                "still_on_page": true
+              },
+              {
+                "domain": "grcviewpoint.com",
+                "uri": "https://grcviewpoint.com/top-cloud-security-solution-providers-2023",
+                "extracted_on": "2024-04-09",
+                "last_seen_on": "2024-07-09",
+                "still_on_page": true
+              },
+              {
+                "domain": "grcviewpoint.com",
+                "uri": "https://grcviewpoint.com/scrut-automation",
+                "extracted_on": "2024-04-09",
+                "last_seen_on": "2024-07-09",
+                "still_on_page": true
+              },
+              {
+                "domain": "eurotidings.com",
+                "uri": "https://eurotidings.com/scrut-automation-raises-10m-in-growth-capital-from-lightspeed-and-massmutual-ventures-to-accelerate-growth-in-north-america",
+                "extracted_on": "2024-07-02",
+                "last_seen_on": "2024-07-02",
+                "still_on_page": true
+              },
+              {
+                "domain": "thenewsstrike.com",
+                "uri": "https://thenewsstrike.com/scrut-automation-launches-regusense-the-unified-control-framework-for-indian-fintech-organizations",
+                "extracted_on": "2024-06-08",
+                "last_seen_on": "2024-06-08",
+                "still_on_page": true
+              },
+              {
+                "domain": "dcreationsllc.com",
+                "uri": "https://dcreationsllc.com/scrut-automation-secures-10-million-in-growth-capital",
+                "extracted_on": "2024-05-30",
+                "last_seen_on": "2024-05-30",
+                "still_on_page": true
+              },
+              {
+                "domain": "business.outlookindia.com",
+                "uri": "https://business.outlookindia.com/companies/scrut-automation-raises-10-million-from-existing-investors-lightspeed-and-massmutual-ventures",
+                "extracted_on": "2024-05-22",
+                "last_seen_on": "2024-05-22",
+                "still_on_page": true
+              },
+              {
+                "domain": "heraldquest.com",
+                "uri": "https://heraldquest.com/scrut-automation-raises-10m-in-growth-capital-from-lightspeed-and-massmutual-ventures-to-accelerate-growth-in-north-america",
+                "extracted_on": "2024-04-21",
+                "last_seen_on": "2024-04-21",
+                "still_on_page": true
+              },
+              {
+                "domain": "activefeatured.com",
+                "uri": "https://activefeatured.com/scrut-automation-raises-10m-in-growth-capital-from-lightspeed-and-massmutual-ventures-to-accelerate-growth-in-north-america",
+                "extracted_on": "2024-04-20",
+                "last_seen_on": "2024-04-20",
+                "still_on_page": true
+              },
+              {
+                "domain": "thegfinews.com",
+                "uri": "https://thegfinews.com/saas-startup-get-your-daily-dose-of-startup-inspiration-with-the-latest-news",
+                "extracted_on": "2024-04-02",
+                "last_seen_on": "2024-04-02",
+                "still_on_page": true
+              },
+              {
+                "domain": "saasboomi.org",
+                "uri": "https://saasboomi.org/business-advisory-board",
+                "extracted_on": "2024-02-01",
+                "last_seen_on": "2024-02-01",
+                "still_on_page": true
+              }
+            ],
+            "verification": {
+              "date": "2025-11-14",
+              "status": "valid"
+            }
+          },
+          "meta": {
+            "params": {
+              "first_name": "Aayush Ghosh Choudhury",
+              "last_name": "Aayush Ghosh Choudhury",
+              "full_name": null,
+              "domain": "scrut.io",
+              "company": null,
+              "linkedin_handle": null,
+              "max_duration": null
+            }
+          }
+        }
+      }
+    ],
+    "Append or update row in sheet": [
+      {
+        "json": {
+          "name": "Aayush Ghosh Choudhury",
+          "email": "aayush@scrut.io",
+          "domain": "scrut.io"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8bdbe6a0-5be2-4971-bf03-149a457da726",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ae21f7ff983ee929f98e8d7968bbd21b49d1a44f2e129169348ba847d37dd5ac"
+  },
+  "id": "X1FFSErzGNJQxfdC",
+  "tags": []
+}
